@@ -163,7 +163,30 @@
         grid-template-columns: 1fr 1fr;
         gap: 12px;
       }
-      @media (max-width: 960px) { .split { grid-template-columns: 1fr; } }
+      .home-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 12px;
+      }
+      .home-card {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px;
+        background: rgba(12, 21, 42, 0.88);
+      }
+      .span-12 { grid-column: span 12; }
+      .span-8 { grid-column: span 8; }
+      .span-6 { grid-column: span 6; }
+      .span-4 { grid-column: span 4; }
+      .mini { font-size: 0.84rem; }
+      .cta-hero {
+        border: 1px solid rgba(131, 175, 255, 0.45);
+        background: linear-gradient(145deg, rgba(30, 49, 90, 0.8), rgba(18, 31, 60, 0.86));
+      }
+      @media (max-width: 960px) {
+        .split { grid-template-columns: 1fr; }
+        .span-8, .span-6, .span-4 { grid-column: span 12; }
+      }
       a { color: var(--accent); }
     </style>
   </head>
@@ -188,14 +211,63 @@
       </div>
 
       <section id="tab-home">
-        <h2>Project Snapshot</h2>
-        <div class="row" id="statsRow"></div>
-        <div class="row">
-          <button id="refreshJobsBtn">Refresh Conversion Jobs</button>
-          <button class="primary" id="runJobsBtn">Run Conversion Jobs</button>
+        <h2>Home</h2>
+        <div class="home-grid">
+          <div class="home-card cta-hero span-12">
+            <div><strong>Import your next story</strong></div>
+            <div class="muted mini" style="margin: 6px 0 10px;">Upload a batch, pick album behavior, and get straight to browse + share.</div>
+            <div class="row">
+              <button class="primary" id="homeStartImportBtn">Import Photos/Videos</button>
+              <button id="homeOpenTimelineBtn">Open Library Timeline</button>
+            </div>
+            <div class="row" id="statsRow"></div>
+          </div>
+
+          <div class="home-card span-8">
+            <div><strong>Continue where you left off</strong></div>
+            <div id="homeLastImport" class="muted mini" style="margin: 8px 0;">Checking recent import…</div>
+            <div class="row">
+              <button id="homeOpenImportTabBtn">Open Import</button>
+              <button id="homeRefreshBtn">Refresh Home</button>
+            </div>
+          </div>
+
+          <div class="home-card span-4">
+            <div><strong>Conversion health</strong></div>
+            <div id="homeJobSummary" class="mini muted" style="margin: 8px 0;">Loading job status…</div>
+            <div class="row">
+              <button id="refreshJobsBtn">Refresh Jobs</button>
+              <button class="primary" id="runJobsBtn">Run Jobs</button>
+            </div>
+          </div>
+
+          <div class="home-card span-6">
+            <div><strong>Recent stories (albums)</strong></div>
+            <div id="homeRecentAlbums" class="list" style="margin-top: 8px;"></div>
+          </div>
+
+          <div class="home-card span-6">
+            <div><strong>Relive by day</strong></div>
+            <div id="homeDayPreview" class="list" style="margin-top: 8px;"></div>
+          </div>
+
+          <div class="home-card span-6">
+            <div><strong>Share quickly</strong></div>
+            <div class="row" style="margin-top: 8px;">
+              <select id="homeShareAlbumId"></select>
+              <input id="homeSharePassword" placeholder="Optional password" />
+              <input id="homeShareExpiresAt" placeholder="Optional expiry ISO" />
+              <button class="primary" id="homeCreateShareBtn">Create Share</button>
+            </div>
+            <pre id="homeShareOut">(share response)</pre>
+          </div>
+
+          <div class="home-card span-6">
+            <div><strong>Active shares</strong></div>
+            <div id="homeActiveShares" class="list" style="margin-top: 8px;"></div>
+          </div>
         </div>
-        <pre id="jobsOut">(derivative conversion job status)</pre>
-        <div class="muted">Design gate artifacts: <a href="/docs/DESIGN_ASSESSMENT.md" target="_blank">Design Assessment</a> · <a href="/docs/UAT.md" target="_blank">Sprint Checklist</a></div>
+        <div class="muted" style="margin-top: 10px;">Design gate artifacts: <a href="/docs/DESIGN_ASSESSMENT.md" target="_blank">Design Assessment</a> · <a href="/docs/UAT.md" target="_blank">Sprint Checklist</a></div>
       </section>
 
       <section id="tab-import" class="hidden">
@@ -282,6 +354,17 @@
 
       function $(id) { return document.getElementById(id); }
       function esc(s) { return String(s ?? "").replace(/[&<>\"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
+      function formatRelativeTime(iso) {
+        if (!iso) return 'unknown time';
+        const diffMs = Date.now() - new Date(iso).getTime();
+        const minutes = Math.round(diffMs / 60000);
+        if (minutes < 1) return 'just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 48) return `${hours}h ago`;
+        const days = Math.round(hours / 24);
+        return `${days}d ago`;
+      }
 
       async function api(url, options = {}) {
         const res = await fetch(url, {
@@ -347,6 +430,83 @@
         }
       }
 
+      async function refreshHomeExperience() {
+        try {
+          const [summary, recentImports, recentAlbums, timeline, shares, jobs] = await Promise.all([
+            api('/api/library/summary'),
+            api('/api/imports/recent?limit=1'),
+            api('/api/albums?page=1&pageSize=6'),
+            api('/api/library/timeline?groupBy=day_taken&page=1&pageSize=3'),
+            api('/api/shares'),
+            api('/api/jobs/derivatives'),
+          ]);
+
+          const latest = recentImports.items?.[0];
+          $('homeLastImport').innerHTML = latest
+            ? `Last import <strong>${formatRelativeTime(latest.createdAt)}</strong> · ${latest.counts.totalFilesInBatch} files · ${latest.counts.logicalAssetsCreated} assets · ${latest.counts.albumsCreated} albums`
+            : 'No imports yet. Start by importing your first trip.';
+
+          $('homeJobSummary').innerHTML = `Queued: <strong>${jobs.summary.queued}</strong> · Processing: <strong>${jobs.summary.processing}</strong> · Failed: <strong>${jobs.summary.failed}</strong> · Completed: <strong>${jobs.summary.completed}</strong>`;
+
+          const albums = recentAlbums.items || [];
+          $('homeRecentAlbums').innerHTML = albums.length
+            ? albums.map((a) => `
+              <div class="list-item mini">
+                <div><strong>${esc(a.name)}</strong> <span class="muted">(${a.assetCount} assets)</span></div>
+                <div class="row" style="margin-top:6px;">
+                  <button data-home-open-album="${a.id}">Open</button>
+                  <button data-home-share-album="${a.id}">Share</button>
+                </div>
+              </div>`).join('')
+            : '<div class="muted mini">No albums yet.</div>';
+
+          $('homeDayPreview').innerHTML = (timeline.items || []).length
+            ? timeline.items.map((g) => `<div class="list-item mini"><strong>${esc(g.day)}</strong> <span class="muted">${g.assets.length} assets</span></div>`).join('')
+            : '<div class="muted mini">No timeline groups yet.</div>';
+
+          const shareItems = (shares.items || []).slice(0, 5);
+          $('homeActiveShares').innerHTML = shareItems.length
+            ? shareItems.map((s) => `
+              <div class="list-item mini">
+                <div><strong>${esc(s.albumName)}</strong> ${s.isExpired ? '<span class="muted">(expired)</span>' : ''}</div>
+                <div class="row" style="margin-top:6px;">
+                  <a href="${s.publicPageUrl}" target="_blank">Open</a>
+                  <button data-home-revoke-share="${s.id}" class="danger">Revoke</button>
+                </div>
+              </div>`).join('')
+            : '<div class="muted mini">No active shares.</div>';
+
+          $('homeShareAlbumId').innerHTML = ['<option value="">Select album…</option>', ...albums.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`)].join('');
+
+          document.querySelectorAll('[data-home-open-album]').forEach((btn) => {
+            btn.onclick = () => {
+              $('selectedAlbumId').value = btn.dataset.homeOpenAlbum;
+              setTab('albums');
+              loadAlbum();
+            };
+          });
+
+          document.querySelectorAll('[data-home-share-album]').forEach((btn) => {
+            btn.onclick = () => {
+              $('homeShareAlbumId').value = btn.dataset.homeShareAlbum;
+            };
+          });
+
+          document.querySelectorAll('[data-home-revoke-share]').forEach((btn) => {
+            btn.onclick = async () => {
+              await api(`/api/shares/${btn.dataset.homeRevokeShare}`, { method: 'DELETE' });
+              await Promise.all([refreshShares(), refreshStats(), refreshHomeExperience()]);
+            };
+          });
+
+          if (!summary.assets && !summary.imports) {
+            $('homeLastImport').innerHTML = 'No imports yet. Click <strong>Import Photos/Videos</strong> to begin.';
+          }
+        } catch (error) {
+          $('homeLastImport').textContent = `Home load error: ${error.message}`;
+        }
+      }
+
       async function runImportFlow() {
         const files = $('importFiles').files;
         if (!files.length) return $('importOut').textContent = 'Select files first.';
@@ -368,7 +528,7 @@
           });
 
           $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
-          await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary()]);
+          await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
         } catch (error) {
           $('importOut').textContent = `Error: ${error.message}`;
         }
@@ -466,9 +626,29 @@
             body: JSON.stringify({ password, expiresAt }),
           });
           $('shareOut').textContent = JSON.stringify(share, null, 2);
-          await refreshShares();
+          await Promise.all([refreshShares(), refreshHomeExperience()]);
         } catch (error) {
           $('shareOut').textContent = `Error: ${error.message}`;
+        }
+      }
+
+      async function createShareFromHome() {
+        try {
+          const albumId = $('homeShareAlbumId').value.trim();
+          if (!albumId) {
+            $('homeShareOut').textContent = 'Select an album first.';
+            return;
+          }
+          const password = $('homeSharePassword').value || null;
+          const expiresAt = $('homeShareExpiresAt').value || null;
+          const share = await api(`/api/shares/albums/${albumId}`, {
+            method: 'POST',
+            body: JSON.stringify({ password, expiresAt }),
+          });
+          $('homeShareOut').textContent = JSON.stringify(share, null, 2);
+          await Promise.all([refreshShares(), refreshStats(), refreshHomeExperience()]);
+        } catch (error) {
+          $('homeShareOut').textContent = `Error: ${error.message}`;
         }
       }
 
@@ -499,6 +679,7 @@
               await api(`/api/shares/${btn.dataset.revokeShare}`, { method: 'DELETE' });
               await refreshShares();
               await refreshStats();
+              await refreshHomeExperience();
             };
           });
         } catch (error) {
@@ -523,11 +704,17 @@
             body: JSON.stringify({ limit: 20, force: true }),
           });
           $('jobsOut').textContent = JSON.stringify(result, null, 2);
-          await Promise.all([refreshJobs(), refreshLibrary(), refreshShares()]);
+          await Promise.all([refreshJobs(), refreshLibrary(), refreshShares(), refreshHomeExperience()]);
         } catch (error) {
           $('jobsOut').textContent = `Error: ${error.message}`;
         }
       }
+
+      $('homeStartImportBtn').onclick = () => setTab('import');
+      $('homeOpenTimelineBtn').onclick = () => { setTab('library'); refreshLibrary(); };
+      $('homeOpenImportTabBtn').onclick = () => setTab('import');
+      $('homeRefreshBtn').onclick = () => Promise.all([refreshStats(), refreshHomeExperience()]);
+      $('homeCreateShareBtn').onclick = createShareFromHome;
 
       $('runImportBtn').onclick = runImportFlow;
       $('refreshLibraryBtn').onclick = refreshLibrary;
@@ -566,7 +753,7 @@
       $('refreshJobsBtn').onclick = refreshJobs;
       $('runJobsBtn').onclick = runJobs;
 
-      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshJobs()]);
+      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshJobs(), refreshHomeExperience()]);
     </script>
   </body>
 </html>

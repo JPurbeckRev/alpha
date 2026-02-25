@@ -234,6 +234,24 @@ app.get("/api/imports/:importId/log", async (req, res) => {
   return res.json(importLog);
 });
 
+app.get("/api/imports/recent", async (req, res) => {
+  const db = await store.read();
+  const limit = normalizePageSize(req.query.limit, 5, 20);
+  const items = [...db.imports]
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))
+    .slice(0, limit)
+    .map((entry) => ({
+      id: entry.id,
+      batchId: entry.batchId,
+      createdAt: entry.createdAt,
+      counts: entry.counts,
+      createdAlbumIds: entry.createdAlbumIds,
+      notes: entry.notes,
+    }));
+
+  return res.json({ items });
+});
+
 app.get("/api/library/summary", async (_req, res) => {
   const db = await store.read();
 
