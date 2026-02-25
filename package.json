@@ -1,0 +1,23 @@
+{
+  "name": "alpha",
+  "version": "1.0.0",
+  "description": "Project workspace for Alpha.",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "photo",
+    "ingest",
+    "self-hosted"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.0.2"
+  }
+}
