@@ -6,27 +6,44 @@
     <title>Alpha — Owner Experience</title>
     <style>
       :root {
-        --bg: #0b1220;
-        --panel: #111a2f;
-        --panel-2: #0f172a;
-        --text: #e6edff;
-        --muted: #a7b4d6;
-        --line: #2a375f;
-        --accent: #6ea4ff;
-        --danger: #ff6d7a;
+        --bg: #0d1424;
+        --panel: rgba(20, 31, 56, 0.84);
+        --panel-2: rgba(16, 24, 44, 0.95);
+        --text: #e8efff;
+        --muted: #aebcde;
+        --line: #2e3e69;
+        --accent: #83afff;
+        --danger: #ff7380;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
         font-family: Inter, Segoe UI, Arial, sans-serif;
-        background: radial-gradient(circle at top, #162546 0, #0b1220 45%);
         color: var(--text);
+        min-height: 100vh;
+        background-color: var(--bg);
+        background-image:
+          radial-gradient(1200px 700px at 15% -20%, rgba(86, 125, 210, 0.28), rgba(86, 125, 210, 0) 60%),
+          radial-gradient(900px 600px at 85% 0%, rgba(110, 84, 185, 0.22), rgba(110, 84, 185, 0) 58%),
+          linear-gradient(180deg, #111b33 0%, #0d1424 56%, #0a1120 100%);
+        background-attachment: fixed;
       }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+        opacity: 0.075;
+        mix-blend-mode: soft-light;
+        z-index: 0;
+      }
+      header, .wrap { position: relative; z-index: 1; }
       header {
         position: sticky;
         top: 0;
-        backdrop-filter: blur(8px);
-        background: rgba(11, 18, 32, 0.85);
+        backdrop-filter: blur(10px);
+        background: rgba(11, 18, 34, 0.72);
         border-bottom: 1px solid var(--line);
         z-index: 10;
       }
@@ -55,13 +72,15 @@
         flex-wrap: wrap;
       }
       .tab {
-        background: var(--panel);
+        background: rgba(18, 28, 50, 0.7);
         color: var(--text);
         border: 1px solid var(--line);
         border-radius: 999px;
         padding: 8px 14px;
         cursor: pointer;
+        transition: border-color 140ms ease, transform 140ms ease;
       }
+      .tab:hover { transform: translateY(-1px); }
       .tab.active { border-color: var(--accent); }
       section {
         margin-top: 14px;
@@ -69,6 +88,7 @@
         border-radius: 14px;
         padding: 14px;
         background: var(--panel);
+        box-shadow: 0 10px 24px rgba(3, 8, 20, 0.28);
       }
       h2 {
         margin: 0 0 10px;
@@ -90,7 +110,7 @@
       input, select, textarea { min-width: 180px; }
       button { cursor: pointer; }
       button.primary { border-color: var(--accent); }
-      button.danger { border-color: var(--danger); color: #ffd0d4; }
+      button.danger { border-color: var(--danger); color: #ffd3d7; }
       .cards {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -100,11 +120,11 @@
         border: 1px solid var(--line);
         border-radius: 12px;
         overflow: hidden;
-        background: #0d1530;
+        background: rgba(14, 23, 45, 0.92);
       }
       .thumb {
         height: 150px;
-        background: #050a18;
+        background: #060d1e;
         display: grid;
         place-items: center;
       }
@@ -127,13 +147,13 @@
         border: 1px solid var(--line);
         border-radius: 10px;
         padding: 10px;
-        background: #0d1530;
+        background: rgba(13, 22, 43, 0.9);
       }
       .hidden { display: none; }
       pre {
         border: 1px solid var(--line);
         border-radius: 10px;
-        background: #0a1022;
+        background: #0a1122;
         padding: 10px;
         max-height: 260px;
         overflow: auto;

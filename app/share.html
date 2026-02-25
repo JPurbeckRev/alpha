@@ -5,20 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Alpha Shared Album</title>
     <style>
-      body { margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif; background: #0b1220; color: #e6edff; }
-      .wrap { max-width: 980px; margin: 0 auto; padding: 20px; }
+      :root {
+        --bg: #0d1424;
+        --line: #2f3f6c;
+        --panel: rgba(20, 31, 56, 0.84);
+        --text: #e6edff;
+        --muted: #aebcde;
+        --accent: #83afff;
+      }
+      body {
+        margin: 0;
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        color: var(--text);
+        min-height: 100vh;
+        background-color: var(--bg);
+        background-image:
+          radial-gradient(900px 500px at 20% -20%, rgba(88, 124, 200, 0.28), rgba(88, 124, 200, 0) 62%),
+          radial-gradient(820px 540px at 80% 0%, rgba(116, 85, 194, 0.21), rgba(116, 85, 194, 0) 56%),
+          linear-gradient(180deg, #111b33 0%, #0d1424 60%, #0a1120 100%);
+        background-attachment: fixed;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+        opacity: 0.075;
+        mix-blend-mode: soft-light;
+      }
+      .wrap { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 20px; }
       h1 { margin: 0 0 8px; }
-      .muted { color: #a7b4d6; }
-      .card { border: 1px solid #2a375f; border-radius: 12px; background: #111a2f; padding: 14px; margin-bottom: 12px; }
+      .muted { color: var(--muted); }
+      .card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 14px; margin-bottom: 12px; }
       .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-      input, button { border: 1px solid #2a375f; border-radius: 8px; padding: 9px 10px; background: #0f172a; color: #e6edff; }
+      input, button { border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; background: rgba(15, 23, 42, 0.92); color: var(--text); }
       button { cursor: pointer; }
       .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
-      .item { border: 1px solid #2a375f; border-radius: 10px; overflow: hidden; background: #0f172a; }
+      .item { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: rgba(15, 23, 42, 0.92); }
       .thumb { background: #020617; height: 160px; display: grid; place-items: center; }
       .thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; }
       .body { padding: 8px; font-size: 0.9rem; }
-      a { color: #7aa2ff; }
+      a { color: var(--accent); }
     </style>
   </head>
   <body>

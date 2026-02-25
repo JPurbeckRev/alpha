@@ -12,6 +12,7 @@ This file stores durable team/project memory: decisions, principles, constraints
 - HANDOFF.md must be updated every dev cycle with clear current state + next step.
 - Every completed sprint should expose a clear sprint-evaluation site for PM review (not dashboard tooling).
 - Owner experience should be user-led and maximal-privilege for evaluation, not tool-panel driven.
+- Visual polish is product behavior; avoid obvious gradient banding and low-fidelity UI artifacts.
 - Sharing must serve derivatives by default; originals remain private unless explicitly authorized.
 - PRD is intentionally resettable each dev round.
 
@@ -31,3 +32,5 @@ This file stores durable team/project memory: decisions, principles, constraints
 - 2026-02-24 22:46 PST — Jon clarified preference: provide a sprint evaluation site experience, not a UAT dashboard/panel framing.
 - 2026-02-24 22:50 PST — Jon raised a design concern: current product evolution feels non-organic for photo/video user behavior; requested formal design assessment before further build work.
 - 2026-02-24 22:52 PST — Produced design gate artifacts (flow map, wireframe spec, checklist) and built owner-first maximal-privilege site experience at `/app` (alias `/uat`).
+- 2026-02-24 23:09 PST — Executed additional sprint for visual polish after PM feedback; fixed severe color banding on owner/share experience and tightened UX presentation quality.
+- 2026-02-24 23:09 PST — Updated PRD completion estimate to 58% after Sprint 4.

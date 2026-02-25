@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-24 22:52
-- **Current Dev Cycle:** Round 1 (Sprint 3 complete + Sprint 4 design prework complete)
-- **Current Status:** Owner site experience upgraded; awaiting PM sign-off on design gate before Sprint 4 execution
-- **In Progress:** PM review of design gate artifacts + owner site flow
-- **Next Prescribed Step:** PM approve design gate checklist, then start Sprint 4 implementation (ARW/MTS conversion + share UX polish + hardening).
-- **Open Blockers:** PM design-gate sign-off pending
-- **Overall PRD Completion (estimate):** 53%
+- **Last Updated (PST):** 2026-02-24 23:09
+- **Current Dev Cycle:** Round 1 (Sprint 4 completed)
+- **Current Status:** Sprint 4 executed and closed
+- **In Progress:** None (awaiting Sprint 5 kickoff)
+- **Next Prescribed Step:** Execute Sprint 5 focused on ARW/MTS conversion workers + queue/retry hardening.
+- **Open Blockers:** None
+- **Overall PRD Completion (estimate):** 58%
 - **Sprint Evaluation Site:** Owner site at `http://localhost:8787/app` (alias: `http://localhost:8787/uat`), checklist at `http://localhost:8787/docs/UAT.md`, smoke command `npm run uat:smoke`
 
 ## Handoff Entries (append-only)
@@ -26,6 +26,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-24 22:44 | Build Team | Product Manager (Jon) | Sprint 3 Executed | Delivered derivative-backed sharing baseline: tokenized album shares, optional password/expiry, derivative-only share delivery endpoint, share rate limiting, updated UAT console/checklist, and passing smoke/test runs. | Kick off Sprint 4: implement ARW/MTS derivative conversion workers and user-facing share page UX; add stronger auth boundaries + hardening. |
 | 2026-02-24 22:50 | Product Manager (Jon) | Design + Build Team | Design Gate Requested | PM concern raised: product evolution feels non-organic for real photo/video organization usage. Formal design assessment requested before further implementation. | Review and align on `docs/DESIGN_ASSESSMENT.md`; convert into approved Sprint 4 design gate checklist. |
 | 2026-02-24 22:52 | Build Team | Product Manager (Jon) | Design Prework + Owner Site Delivered | Completed requested design artifacts (`DESIGN_ASSESSMENT.md`, `UX_FLOW_MAP.md`, `WIREFRAME_SPEC.md`, `DESIGN_GATE_CHECKLIST.md`) and shipped a maximal-privilege owner site at `/app` (alias `/uat`) with integrated import, browse, albums, sharing, and share-page experience. | PM review and sign-off on design gate checklist; then execute Sprint 4 implementation scope. |
+| 2026-02-24 23:09 | Build Team | Product Manager (Jon) | Sprint 4 Executed | Executed additional sprint after PM visual feedback: fixed severe color banding on owner/share pages, elevated visual quality, and finalized owner-first workflow/API fit. Design-gate artifacts completed and applied in implementation. | Kick off Sprint 5: ARW/MTS conversion workers + queued derivative processing + security/hardening pass. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

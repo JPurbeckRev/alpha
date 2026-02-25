@@ -98,6 +98,19 @@ function scrubAsset(asset) {
   };
 }
 
+function sendFileSafe(res, filePath, { notFoundMessage = "File not found" } = {}) {
+  return res.sendFile(filePath, (error) => {
+    if (!error) return;
+    if (res.headersSent) return;
+
+    if (error?.statusCode === 404 || error?.code === "ENOENT") {
+      return res.status(404).json({ error: notFoundMessage });
+    }
+
+    return res.status(500).json({ error: "Failed to read file" });
+  });
+}
+
 function asBoolean(value, fallback = false) {
   if (value === undefined) return fallback;
   if (typeof value === "boolean") return value;
@@ -275,7 +288,7 @@ app.get("/api/owner/assets/:assetId/preview", async (req, res) => {
   if (derivative?.storagePath) {
     res.setHeader("Content-Type", derivative.mimeType || "application/octet-stream");
     res.setHeader("Cache-Control", "private, max-age=120");
-    return res.sendFile(derivative.storagePath);
+    return sendFileSafe(res, derivative.storagePath, { notFoundMessage: "Preview file missing" });
   }
 
   const fallback = pickOwnerPreviewSource(asset.sourceFiles);
@@ -285,7 +298,7 @@ app.get("/api/owner/assets/:assetId/preview", async (req, res) => {
 
   res.setHeader("Content-Type", sourceMime(fallback.originalName));
   res.setHeader("Cache-Control", "private, max-age=60");
-  return res.sendFile(fallback.storagePath);
+  return sendFileSafe(res, fallback.storagePath, { notFoundMessage: "Preview source file missing" });
 });
 
 app.get("/api/owner/source-files/:sourceFileId/download", async (req, res) => {
@@ -295,7 +308,7 @@ app.get("/api/owner/source-files/:sourceFileId/download", async (req, res) => {
 
   res.setHeader("Content-Type", sourceFile.mimeType || sourceMime(sourceFile.originalName));
   res.setHeader("Content-Disposition", `attachment; filename=\"${sourceFile.originalName}\"`);
-  return res.sendFile(sourceFile.storagePath);
+  return sendFileSafe(res, sourceFile.storagePath, { notFoundMessage: "Original source file missing" });
 });
 
 app.get("/api/library/timeline", async (req, res) => {
@@ -476,7 +489,7 @@ app.get("/api/shares/:token/assets/:assetId/file", withShareRateLimit, async (re
 
   res.setHeader("Content-Type", derivative.mimeType || "application/octet-stream");
   res.setHeader("Cache-Control", "public, max-age=300");
-  return res.sendFile(derivative.storagePath);
+  return sendFileSafe(res, derivative.storagePath, { notFoundMessage: "Shared derivative file missing" });
 });
 
 bootstrap()
