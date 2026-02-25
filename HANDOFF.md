@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 08:40
-- **Current Dev Cycle:** Round 1 (Sprint 7 completed)
-- **Current Status:** Import-complete narrative UX and share trust/clarity cues shipped across owner + recipient surfaces.
-- **In Progress:** None (awaiting Sprint 8 kickoff)
-- **Next Prescribed Step:** Execute Sprint 8 for deeper timeline storytelling polish (covers, sequence quality, and stronger empty/error guidance).
+- **Last Updated (PST):** 2026-02-25 08:43
+- **Current Dev Cycle:** Round 1 (Sprint 8 completed)
+- **Current Status:** UI clarity pass shipped: cleaner, direct status messaging and reduced debug-noise defaults across owner experience.
+- **In Progress:** None (awaiting Sprint 9 kickoff)
+- **Next Prescribed Step:** Execute Sprint 9 for timeline storytelling polish (hero cover quality + sequence rhythm) and stronger first-run guidance.
 - **Open Blockers:** None
-- **Overall PRD Completion (estimate):** 74%
+- **Overall PRD Completion (estimate):** 78%
 
 ### Project Snapshot (primary experience)
 - **Primary experience now:** Upload batch → explicit import → optional album creation (Day Taken / Day Imported / New Name) → browse library/albums → create protected share links.
@@ -38,6 +38,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-24 23:15 | Build Team | Product Manager (Jon) | Sprint 5 Executed | Implemented derivative conversion job queue with retry/backoff, job APIs, owner-site job controls, and safer file serving. Updated docs and smoke validation. | Kick off Sprint 6: improve ARW/MTS conversion reliability and move conversion execution toward dedicated worker scheduling. |
 | 2026-02-25 08:36 | Build Team | Product Manager (Jon) | Sprint 6 Executed | Shipped conversion reliability hardening: converter preflight detection, non-retryable failure classification, stale-processing job recovery, worker status/tick APIs, and interval-based background worker scheduling; surfaced worker health in owner Home panel and expanded API/test coverage. | Kick off Sprint 7: strengthen import-complete narrative + recipient trust/clarity experience on sharing surfaces. |
 | 2026-02-25 08:40 | Build Team | Product Manager (Jon) | Sprint 7 Executed | Implemented import-complete destination panel in owner Import flow (clear outcome + quick next actions), and upgraded recipient share page with trust badges (derivative-only/privacy, password/expiry visibility, unavailable-item clarity), plus improved protected/expired messaging and retry affordance. | Kick off Sprint 8: improve timeline storytelling quality and first-run/empty-state guidance. |
+| 2026-02-25 08:43 | Build Team | Product Manager (Jon) | Sprint 8 Executed | Applied clean/direct UI pass: conversion panel now provides concise queue/run status with optional expandable job details, home/share creation feedback converted from verbose JSON dumps to clear action-oriented messages, and import diagnostics moved under collapsible details to reduce default visual noise while retaining debug depth. | Kick off Sprint 9: elevate timeline storytelling hierarchy and first-run coaching. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

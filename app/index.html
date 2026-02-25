@@ -236,10 +236,15 @@
           <div class="home-card span-4">
             <div><strong>Conversion health</strong></div>
             <div id="homeJobSummary" class="mini muted" style="margin: 8px 0;">Loading job status…</div>
+            <div id="homeJobsStatus" class="mini muted" style="margin: 6px 0;"></div>
             <div class="row">
               <button id="refreshJobsBtn">Refresh Jobs</button>
               <button class="primary" id="runJobsBtn">Run Jobs</button>
             </div>
+            <details>
+              <summary class="mini muted">Job details</summary>
+              <pre id="jobsOut">(job details)</pre>
+            </details>
           </div>
 
           <div class="home-card span-6">
@@ -260,7 +265,7 @@
               <input id="homeShareExpiresAt" placeholder="Optional expiry ISO" />
               <button class="primary" id="homeCreateShareBtn">Create Share</button>
             </div>
-            <pre id="homeShareOut">(share response)</pre>
+            <div id="homeShareOut" class="mini muted">Ready to create share link.</div>
           </div>
 
           <div class="home-card span-6">
@@ -285,7 +290,10 @@
         </div>
         <div class="muted">This owner flow is explicit staging + import in one guided action.</div>
         <div id="importResultPanel" class="list-item" style="display:none; margin:10px 0;"></div>
-        <pre id="importOut">(import log)</pre>
+        <details>
+          <summary class="mini muted">Import details</summary>
+          <pre id="importOut">(import log)</pre>
+        </details>
       </section>
 
       <section id="tab-library" class="hidden">
@@ -344,7 +352,7 @@
           <button class="primary" id="createShareBtn">Create Share</button>
         </div>
         <div id="shareList" class="list"></div>
-        <pre id="shareOut">(share response)</pre>
+        <div id="shareOut" class="mini muted">Share actions will appear here.</div>
       </section>
     </div>
 
@@ -665,7 +673,7 @@
             method: 'POST',
             body: JSON.stringify({ password, expiresAt }),
           });
-          $('shareOut').textContent = JSON.stringify(share, null, 2);
+          $('shareOut').textContent = `Created share for album ${share.albumId}. Open: ${location.origin}${share.publicPageUrl}`;
           await Promise.all([refreshShares(), refreshHomeExperience()]);
         } catch (error) {
           $('shareOut').textContent = `Error: ${error.message}`;
@@ -685,7 +693,7 @@
             method: 'POST',
             body: JSON.stringify({ password, expiresAt }),
           });
-          $('homeShareOut').textContent = JSON.stringify(share, null, 2);
+          $('homeShareOut').textContent = `Share created. Open: ${location.origin}${share.publicPageUrl}`;
           await Promise.all([refreshShares(), refreshStats(), refreshHomeExperience()]);
         } catch (error) {
           $('homeShareOut').textContent = `Error: ${error.message}`;
@@ -731,9 +739,11 @@
         try {
           const payload = await api('/api/jobs/derivatives');
           $('jobsOut').textContent = JSON.stringify(payload, null, 2);
+          $('homeJobsStatus').textContent = `Queue ${payload.summary.queued} · Processing ${payload.summary.processing} · Failed ${payload.summary.failed}`;
           await refreshStats();
         } catch (error) {
           $('jobsOut').textContent = `Error: ${error.message}`;
+          $('homeJobsStatus').textContent = `Job refresh failed: ${error.message}`;
         }
       }
 
@@ -744,9 +754,11 @@
             body: JSON.stringify({ limit: 20, force: true }),
           });
           $('jobsOut').textContent = JSON.stringify(result, null, 2);
+          $('homeJobsStatus').textContent = `Run complete: ${result.completed} completed · ${result.requeued} requeued · ${result.failed} failed`;
           await Promise.all([refreshJobs(), refreshLibrary(), refreshShares(), refreshHomeExperience()]);
         } catch (error) {
           $('jobsOut').textContent = `Error: ${error.message}`;
+          $('homeJobsStatus').textContent = `Run failed: ${error.message}`;
         }
       }
 
