@@ -5,12 +5,20 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 ## Current State (authoritative quick view)
 - **Last Updated (PST):** 2026-02-24 23:15
 - **Current Dev Cycle:** Round 1 (Sprint 5 completed)
-- **Current Status:** Sprint 5 executed and closed
+- **Current Status:** Owner-first end-to-end flow is live and usable; conversion reliability hardening is next.
 - **In Progress:** None (awaiting Sprint 6 kickoff)
-- **Next Prescribed Step:** Execute Sprint 6 for conversion reliability (tool detection/fallbacks) + worker/scheduling hardening.
+- **Next Prescribed Step:** Execute Sprint 6 focused on conversion reliability (tool detection/fallbacks) and dedicated worker/scheduling hardening.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 61%
-- **Sprint Evaluation Site:** Owner site at `http://localhost:8787/app` (alias: `http://localhost:8787/uat`), checklist at `http://localhost:8787/docs/UAT.md`, smoke command `npm run uat:smoke`
+
+### Project Snapshot (primary experience)
+- **Primary experience now:** Upload batch → explicit import → optional album creation (Day Taken / Day Imported / New Name) → browse library/albums → create protected share links.
+- **What is production-credible today:** Owner site workflows are integrated in one surface (`/app`), share links are tokenized with optional password/expiry, and derivative-only delivery is enforced for shared access.
+- **What still needs hardening:** ARW/MTS conversion reliability under tool variance and queue execution resilience under sustained load.
+- **How to validate quickly:**
+  - Owner site: `http://localhost:8787/app` (alias: `http://localhost:8787/uat`)
+  - UAT checklist: `http://localhost:8787/docs/UAT.md`
+  - Smoke run: `npm run uat:smoke`
 
 ## Handoff Entries (append-only)
 
