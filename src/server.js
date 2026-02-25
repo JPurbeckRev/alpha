@@ -34,7 +34,7 @@ const app = express();
 const port = Number(process.env.PORT || 8787);
 
 const store = new JsonStore(paths.dbPath);
-const shareRateLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 120 });
+const shareRateLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 1200 });
 
 const jobWorkerEnabled = asBoolean(process.env.ALPHA_JOB_WORKER_ENABLED, true);
 const jobWorkerIntervalMs = Math.max(5_000, Number(process.env.ALPHA_JOB_WORKER_INTERVAL_MS || 30_000));

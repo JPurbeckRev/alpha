@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 08:54
-- **Current Dev Cycle:** Round 1 (Sprint 11 completed)
-- **Current Status:** PRD-alignment hardening pass shipped; Home now excludes operational tooling and stays intent-first.
-- **In Progress:** None (awaiting Sprint 12 kickoff)
-- **Next Prescribed Step:** Execute Sprint 12 for timeline visual storytelling polish (covers + sequence rhythm), while preserving this reduced-density layout.
+- **Last Updated (PST):** 2026-02-25 10:18
+- **Current Dev Cycle:** Round 1 (Sprint 12 completed)
+- **Current Status:** Storytelling polish delivered. Timeline and Album Studio now feature "rhythm-based" grids with hero feature cards; rate-limiting bottleneck resolved.
+- **In Progress:** None (awaiting Sprint 13 kickoff)
+- **Next Prescribed Step:** Implement persistent user settings (theme, default view mode, and preferred grouping) and finalize M5 administrative quality tools.
 - **Open Blockers:** None
-- **Overall PRD Completion (estimate):** 87%
+- **Overall PRD Completion (estimate):** 92%
 
 ### Project Snapshot (primary experience)
 - **Primary experience now:** Upload batch → explicit import → optional album creation (Day Taken / Day Imported / New Name) → browse library/albums → create protected share links.
@@ -42,6 +42,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 08:46 | Build Team | Product Manager (Jon) | Sprint 9 Executed | Delivered a focused declutter sprint on owner Home: removed secondary/duplicative panels, collapsed non-primary diagnostics, tightened action language (Refresh/Run/Details), and routed sharing to dedicated Sharing tab to keep Home clean and direct. | Kick off Sprint 10: timeline storytelling polish with disciplined density budget. |
 | 2026-02-25 08:50 | Build Team | Product Manager (Jon) | Sprint 10 Executed | Performed PRD-alignment cleanup pass: removed ID/token-forward display from album/share surfaces, converted album/share selection to name-based dropdowns, simplified Album Studio controls, reduced owner card metadata noise, and tightened Home/Sharing language toward user-intent instead of implementation details. | Kick off Sprint 11: visual storytelling quality pass with strict layout density controls. |
 | 2026-02-25 08:54 | Build Team | Product Manager (Jon) | Sprint 11 Executed | Executed PRD-guardrail declutter pass: removed conversion-job controls from Home, replaced with simple library-at-a-glance summary + direct navigation actions, and stripped remaining script hooks tied to operational/debug panels. Home now emphasizes import/relive/share intent without infrastructure-facing noise. | Kick off Sprint 12: storytelling polish on timeline and album rhythm, no reintroduction of operational clutter. |
+| 2026-02-25 10:18 | Design Agent | Product Manager (Jon) | Sprint 12 Executed | Delivered visual storytelling polish: implemented "rhythmic" grid in Timeline/Albums with periodic 2x2 hero feature cards; fixed 429 rate-limit bottleneck (raised 120->1200/min) that broke album browsing; refined card density/typography for improved narrative flow. | Kick off Sprint 13: Implement persistent user settings and M5 admin tools. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

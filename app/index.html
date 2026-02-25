@@ -113,23 +113,36 @@
       button.danger { border-color: var(--danger); color: #ffd3d7; }
       .cards {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        grid-auto-rows: 200px;
+        gap: 16px;
       }
       .card {
         border: 1px solid var(--line);
         border-radius: 12px;
         overflow: hidden;
         background: rgba(14, 23, 45, 0.92);
+        transition: transform 200ms ease, box-shadow 200ms ease;
+        display: flex;
+        flex-direction: column;
+      }
+      .card.feature {
+        grid-column: span 2;
+        grid-row: span 2;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(3, 8, 20, 0.4);
       }
       .thumb {
-        height: 150px;
+        flex: 1;
         background: #060d1e;
         display: grid;
         place-items: center;
+        overflow: hidden;
       }
       .thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; }
-      .card-body { padding: 9px; font-size: 0.9rem; }
+      .card-body { padding: 9px; font-size: 0.82rem; background: rgba(10, 18, 36, 0.5); }
       .pill {
         display: inline-block;
         font-size: 0.76rem;
@@ -366,22 +379,23 @@
 
       document.querySelectorAll(".tab").forEach((btn) => btn.onclick = () => setTab(btn.dataset.tab));
 
-      function mediaCard(asset, includeActions = false) {
+      function mediaCard(asset, index = 0, includeActions = false) {
         const isVideo = asset.type === "video";
+        const isFeature = (index % 7 === 0);
         const media = isVideo
           ? `<video src="${asset.previewUrl}" controls muted preload="metadata"></video>`
-          : `<img src="${asset.previewUrl}" alt="asset preview" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
+          : `<img src="${asset.previewUrl}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
 
         const actions = includeActions
-          ? `<div class="row"><button data-remove="${asset.id}">Remove</button></div>`
+          ? `<div class="row" style="margin-top:4px;"><button data-remove="${asset.id}" class="mini">Remove</button></div>`
           : "";
 
         return `
-          <div class="card">
+          <div class="card ${isFeature ? 'feature' : ''}">
             <div class="thumb">${media}</div>
             <div class="card-body">
-              <div><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown camera")}</span></div>
-              <div class="muted">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
+              <div class="mini"><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown")}</span></div>
+              <div class="muted mini">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
               ${actions}
             </div>
           </div>
@@ -536,8 +550,8 @@
           $('timelineContainer').innerHTML = filtered.map((group) => `
             <div class="list-item">
               <div><strong>${esc(group.day)}</strong> <span class="muted">(${group.assets.length} assets)</span></div>
-              <div class="cards" style="margin-top:8px;">
-                ${group.assets.map((a) => mediaCard(a)).join('')}
+              <div class="cards" style="margin-top:12px;">
+                ${group.assets.map((a, i) => mediaCard(a, i)).join('')}
               </div>
             </div>
           `).join('') || '<div class="muted">No assets yet.</div>';
@@ -592,7 +606,7 @@
         try {
           const album = await api(`/api/albums/${albumId}`);
           $('renameAlbumName').value = album.name;
-          $('albumAssets').innerHTML = album.assets.map((a) => mediaCard(a, true)).join('') || '<div class="muted">Album is empty.</div>';
+          $('albumAssets').innerHTML = album.assets.map((a, i) => mediaCard(a, i, true)).join('') || '<div class="muted">Album is empty.</div>';
 
           document.querySelectorAll('[data-remove]').forEach((btn) => {
             btn.onclick = async () => {
