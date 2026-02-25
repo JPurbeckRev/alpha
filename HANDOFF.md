@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 08:50
-- **Current Dev Cycle:** Round 1 (Sprint 10 completed)
-- **Current Status:** PRD-alignment cleanup shipped: technical/admin-heavy UI elements reduced and primary experience now more direct.
-- **In Progress:** None (awaiting Sprint 11 kickoff)
-- **Next Prescribed Step:** Execute Sprint 11 for timeline storytelling polish (covers + visual rhythm) with strict density budget.
+- **Last Updated (PST):** 2026-02-25 08:54
+- **Current Dev Cycle:** Round 1 (Sprint 11 completed)
+- **Current Status:** PRD-alignment hardening pass shipped; Home now excludes operational tooling and stays intent-first.
+- **In Progress:** None (awaiting Sprint 12 kickoff)
+- **Next Prescribed Step:** Execute Sprint 12 for timeline visual storytelling polish (covers + sequence rhythm), while preserving this reduced-density layout.
 - **Open Blockers:** None
-- **Overall PRD Completion (estimate):** 84%
+- **Overall PRD Completion (estimate):** 87%
 
 ### Project Snapshot (primary experience)
 - **Primary experience now:** Upload batch → explicit import → optional album creation (Day Taken / Day Imported / New Name) → browse library/albums → create protected share links.
@@ -41,6 +41,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 08:43 | Build Team | Product Manager (Jon) | Sprint 8 Executed | Applied clean/direct UI pass: conversion panel now provides concise queue/run status with optional expandable job details, home/share creation feedback converted from verbose JSON dumps to clear action-oriented messages, and import diagnostics moved under collapsible details to reduce default visual noise while retaining debug depth. | Kick off Sprint 9: elevate timeline storytelling hierarchy and first-run coaching. |
 | 2026-02-25 08:46 | Build Team | Product Manager (Jon) | Sprint 9 Executed | Delivered a focused declutter sprint on owner Home: removed secondary/duplicative panels, collapsed non-primary diagnostics, tightened action language (Refresh/Run/Details), and routed sharing to dedicated Sharing tab to keep Home clean and direct. | Kick off Sprint 10: timeline storytelling polish with disciplined density budget. |
 | 2026-02-25 08:50 | Build Team | Product Manager (Jon) | Sprint 10 Executed | Performed PRD-alignment cleanup pass: removed ID/token-forward display from album/share surfaces, converted album/share selection to name-based dropdowns, simplified Album Studio controls, reduced owner card metadata noise, and tightened Home/Sharing language toward user-intent instead of implementation details. | Kick off Sprint 11: visual storytelling quality pass with strict layout density controls. |
+| 2026-02-25 08:54 | Build Team | Product Manager (Jon) | Sprint 11 Executed | Executed PRD-guardrail declutter pass: removed conversion-job controls from Home, replaced with simple library-at-a-glance summary + direct navigation actions, and stripped remaining script hooks tied to operational/debug panels. Home now emphasizes import/relive/share intent without infrastructure-facing noise. | Kick off Sprint 12: storytelling polish on timeline and album rhythm, no reintroduction of operational clutter. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

@@ -240,17 +240,12 @@
           </div>
 
           <div class="home-card span-4">
-            <div><strong>Conversion health</strong></div>
-            <div id="homeJobSummary" class="mini muted" style="margin: 8px 0;">Loading job status…</div>
-            <div id="homeJobsStatus" class="mini muted" style="margin: 6px 0;"></div>
+            <div><strong>Library at a glance</strong></div>
+            <div id="homeAtGlance" class="mini muted" style="margin: 8px 0;">Loading summary…</div>
             <div class="row">
-              <button id="refreshJobsBtn">Refresh</button>
-              <button class="primary" id="runJobsBtn">Run</button>
+              <button id="homeOpenAlbumsBtn">Open Albums</button>
+              <button id="homeOpenSharingBtn">Open Sharing</button>
             </div>
-            <details>
-              <summary class="mini muted">Details</summary>
-              <pre id="jobsOut">(job details)</pre>
-            </details>
           </div>
         </div>
       </section>
@@ -412,12 +407,10 @@
 
       async function refreshHomeExperience() {
         try {
-          const [summary, recentImports, recentAlbums, jobs, worker] = await Promise.all([
+          const [summary, recentImports, recentAlbums] = await Promise.all([
             api('/api/library/summary'),
             api('/api/imports/recent?limit=1'),
             api('/api/albums?page=1&pageSize=6'),
-            api('/api/jobs/derivatives'),
-            api('/api/jobs/derivatives/worker'),
           ]);
 
           const latest = recentImports.items?.[0];
@@ -425,7 +418,7 @@
             ? `Last import <strong>${formatRelativeTime(latest.createdAt)}</strong> · ${latest.counts.totalFilesInBatch} files · ${latest.counts.logicalAssetsCreated} assets · ${latest.counts.albumsCreated} albums`
             : 'No imports yet. Start by importing your first trip.';
 
-          $('homeJobSummary').innerHTML = `Queued: <strong>${jobs.summary.queued}</strong> · Processing: <strong>${jobs.summary.processing}</strong> · Failed: <strong>${jobs.summary.failed}</strong> · Completed: <strong>${jobs.summary.completed}</strong><br><span class="muted">Worker: ${worker.enabled ? 'on' : 'off'} · every ${Math.round(worker.intervalMs / 1000)}s · last run ${worker.lastRunAt ? formatRelativeTime(worker.lastRunAt) : 'never'}</span>`;
+          $('homeAtGlance').innerHTML = `Assets <strong>${summary.assets}</strong> · Albums <strong>${summary.albums}</strong> · Shares <strong>${summary.shares}</strong>`;
 
           const albums = recentAlbums.items || [];
           $('homeRecentAlbums').innerHTML = albums.length
@@ -664,37 +657,12 @@
         }
       }
 
-      async function refreshJobs() {
-        try {
-          const payload = await api('/api/jobs/derivatives');
-          $('jobsOut').textContent = JSON.stringify(payload, null, 2);
-          $('homeJobsStatus').textContent = `Queue ${payload.summary.queued} · Processing ${payload.summary.processing} · Failed ${payload.summary.failed}`;
-          await refreshStats();
-        } catch (error) {
-          $('jobsOut').textContent = `Error: ${error.message}`;
-          $('homeJobsStatus').textContent = `Job refresh failed: ${error.message}`;
-        }
-      }
-
-      async function runJobs() {
-        try {
-          const result = await api('/api/jobs/derivatives/run', {
-            method: 'POST',
-            body: JSON.stringify({ limit: 20, force: true }),
-          });
-          $('jobsOut').textContent = JSON.stringify(result, null, 2);
-          $('homeJobsStatus').textContent = `Run complete: ${result.completed} completed · ${result.requeued} requeued · ${result.failed} failed`;
-          await Promise.all([refreshJobs(), refreshLibrary(), refreshShares(), refreshHomeExperience()]);
-        } catch (error) {
-          $('jobsOut').textContent = `Error: ${error.message}`;
-          $('homeJobsStatus').textContent = `Run failed: ${error.message}`;
-        }
-      }
-
       $('homeStartImportBtn').onclick = () => setTab('import');
       $('homeOpenTimelineBtn').onclick = () => { setTab('library'); refreshLibrary(); };
       $('homeOpenImportTabBtn').onclick = () => setTab('import');
       $('homeOpenSharingTabBtn').onclick = () => setTab('sharing');
+      $('homeOpenAlbumsBtn').onclick = () => setTab('albums');
+      $('homeOpenSharingBtn').onclick = () => setTab('sharing');
       $('homeRefreshBtn').onclick = () => Promise.all([refreshStats(), refreshHomeExperience()]);
 
       $('runImportBtn').onclick = runImportFlow;
@@ -723,10 +691,8 @@
         await refreshAlbums();
       };
       $('createShareBtn').onclick = createShare;
-      $('refreshJobsBtn').onclick = refreshJobs;
-      $('runJobsBtn').onclick = runJobs;
 
-      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshJobs(), refreshHomeExperience()]);
+      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshHomeExperience()]);
     </script>
   </body>
 </html>
