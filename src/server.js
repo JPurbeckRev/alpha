@@ -532,6 +532,26 @@ app.post("/api/jobs/derivatives/worker/run", async (_req, res) => {
   }
 });
 
+app.post("/api/jobs/derivatives/reset-failed", async (_req, res) => {
+  try {
+    const result = await store.update((db) => {
+      let count = 0;
+      db.derivativeJobs.forEach((job) => {
+        if (job.status === "failed") {
+          job.status = "queued";
+          job.attempts = 0;
+          job.error = null;
+          count++;
+        }
+      });
+      return { resetCount: count };
+    });
+    return res.json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 app.get("/api/shares", async (_req, res) => {
   const db = await store.read();
   return res.json({

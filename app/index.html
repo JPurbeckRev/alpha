@@ -463,6 +463,17 @@
             </div>
           </div>
           <div class="home-card span-12">
+            <div><strong>Maintenance (M5)</strong></div>
+            <div class="muted mini" style="margin: 8px 0;">Manage background workers and storage health.</div>
+            <div class="row">
+              <button id="runWorkerBtn">Run Conversion Worker</button>
+              <button id="resetFailedJobsBtn" class="danger">Reset Failed Jobs</button>
+              <button id="refreshStatsBtn">Refresh Stats</button>
+            </div>
+            <div id="m5Status" class="mini muted" style="margin-top: 8px;"></div>
+          </div>
+
+          <div class="home-card span-12">
             <div class="row">
               <button class="primary" id="saveSettingsBtn">Save Settings</button>
               <span id="settingsStatus" class="mini muted"></span>
@@ -876,6 +887,33 @@
       };
       $('createShareBtn').onclick = createShare;
       $('saveSettingsBtn').onclick = saveSettings;
+
+      $('runWorkerBtn').onclick = async () => {
+        try {
+          $('m5Status').textContent = 'Starting worker tick...';
+          const res = await api('/api/jobs/derivatives/worker/run', { method: 'POST' });
+          $('m5Status').textContent = `Worker run complete: ${JSON.stringify(res.lastResult || res)}`;
+          await refreshStats();
+        } catch (error) {
+          $('m5Status').textContent = `Error: ${error.message}`;
+        }
+      };
+
+      $('resetFailedJobsBtn').onclick = async () => {
+        if (!confirm('Reset all failed conversion jobs?')) return;
+        try {
+          const res = await api('/api/jobs/derivatives/reset-failed', { method: 'POST' });
+          $('m5Status').textContent = `Reset ${res.resetCount} failed jobs.`;
+          await refreshStats();
+        } catch (error) {
+          $('m5Status').textContent = `Error: ${error.message}`;
+        }
+      };
+
+      $('refreshStatsBtn').onclick = async () => {
+        await refreshStats();
+        $('m5Status').textContent = 'Stats refreshed.';
+      };
 
       Promise.all([
         refreshStats(),
