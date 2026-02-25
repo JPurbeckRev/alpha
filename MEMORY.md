@@ -11,3 +11,4 @@ This file stores durable team/project memory: decisions, principles, constraints
 
 ## Log
 - 2026-02-24 22:05 PST — Initialized core memory and sprint persona model for Alpha.
+- 2026-02-24 22:15 PST — Upgraded PRD.md to production-quality structure with clearer scope boundaries, explicit import/share rules, measurable success criteria, and cleaner MVP milestones.
