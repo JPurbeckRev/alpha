@@ -94,3 +94,4 @@ Purpose: define a lean, complete set of sprint-team personas with clear principl
 - Prefer explicit ownership and handoffs over assumptions.
 - Raise risks early; never hide uncertainty.
 - “Done” means delivered, tested, observed, and handoff-ready.
+- Every round, each discipline must contribute a voice entry in `TEAM_VOICES.md` (or explicitly state no strong signal).
