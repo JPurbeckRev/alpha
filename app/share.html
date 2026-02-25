@@ -39,6 +39,7 @@
       .muted { color: var(--muted); }
       .card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 14px; margin-bottom: 12px; }
       .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+      .pill { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:2px 8px; font-size:0.78rem; color:var(--muted); }
       input, button { border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; background: rgba(15, 23, 42, 0.92); color: var(--text); }
       button { cursor: pointer; }
       .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
@@ -54,10 +55,16 @@
       <h1 id="title">Shared Album</h1>
       <p id="subtitle" class="muted">Loading…</p>
 
+      <div class="card" id="trustCard" style="display:none;">
+        <div class="row" id="trustBadges"></div>
+        <div id="trustMsg" class="muted"></div>
+      </div>
+
       <div class="card" id="pwCard" style="display:none;">
         <div class="row">
           <input id="password" type="password" placeholder="Share password" />
           <button id="unlockBtn">Unlock</button>
+          <button id="retryBtn">Retry</button>
         </div>
         <div id="pwMsg" class="muted"></div>
       </div>
@@ -70,6 +77,24 @@
       let password = '';
 
       function esc(s) { return String(s ?? '').replace(/[&<>\"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
+
+      function isoOrNone(value) {
+        if (!value) return 'none';
+        const d = new Date(value);
+        return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
+      }
+
+      function renderTrustCard(share, assets) {
+        const unavailable = assets.filter((a) => !a.url).length;
+        document.getElementById('trustCard').style.display = 'block';
+        document.getElementById('trustBadges').innerHTML = `
+          <span class="pill">Derivative-only sharing</span>
+          <span class="pill">${share.requiresPassword ? 'Password protected' : 'No password'}</span>
+          <span class="pill">Expires: ${isoOrNone(share.expiresAt)}</span>
+          <span class="pill">Unavailable items: ${unavailable}</span>
+        `;
+        document.getElementById('trustMsg').textContent = 'This page shows web-safe derivatives only. Original source files are never exposed here.';
+      }
 
       async function fetchShare() {
         if (!token) {
@@ -84,8 +109,12 @@
         if (!res.ok) {
           if (res.status === 401) {
             document.getElementById('pwCard').style.display = 'block';
-            document.getElementById('pwMsg').textContent = 'Password required.';
+            document.getElementById('pwMsg').textContent = 'Password required or invalid password. Please try again.';
             document.getElementById('subtitle').textContent = 'This shared album is protected.';
+            return;
+          }
+          if (res.status === 410) {
+            document.getElementById('subtitle').textContent = 'This share link has expired.';
             return;
           }
           document.getElementById('subtitle').textContent = body.error || 'Unable to open share.';
@@ -93,8 +122,13 @@
         }
 
         document.getElementById('pwCard').style.display = body.share.requiresPassword ? 'block' : 'none';
+        document.getElementById('pwMsg').textContent = body.share.requiresPassword
+          ? 'Protected share: enter password to view media.'
+          : '';
         document.getElementById('title').textContent = body.album.name;
         document.getElementById('subtitle').textContent = `${body.assets.length} items`;
+
+        renderTrustCard(body.share, body.assets);
 
         document.getElementById('content').innerHTML = body.assets.map((asset) => {
           if (!asset.url) {
@@ -114,6 +148,8 @@
         password = document.getElementById('password').value;
         await fetchShare();
       };
+
+      document.getElementById('retryBtn').onclick = fetchShare;
 
       fetchShare();
     </script>

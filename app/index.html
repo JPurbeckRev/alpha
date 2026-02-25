@@ -179,6 +179,7 @@
       .span-6 { grid-column: span 6; }
       .span-4 { grid-column: span 4; }
       .mini { font-size: 0.84rem; }
+      .success { color: #9fe3b5; }
       .cta-hero {
         border: 1px solid rgba(131, 175, 255, 0.45);
         background: linear-gradient(145deg, rgba(30, 49, 90, 0.8), rgba(18, 31, 60, 0.86));
@@ -283,6 +284,7 @@
           <button class="primary" id="runImportBtn">Upload + Import</button>
         </div>
         <div class="muted">This owner flow is explicit staging + import in one guided action.</div>
+        <div id="importResultPanel" class="list-item" style="display:none; margin:10px 0;"></div>
         <pre id="importOut">(import log)</pre>
       </section>
 
@@ -508,6 +510,41 @@
         }
       }
 
+      function renderImportResultPanel(upload, importLog) {
+        const panel = $('importResultPanel');
+        const created = importLog?.createdAlbumIds?.length || 0;
+        panel.style.display = 'block';
+        panel.innerHTML = `
+          <div class="success"><strong>Import complete.</strong> ${importLog.counts.logicalAssetsCreated} assets from ${importLog.counts.totalFilesInBatch} files.</div>
+          <div class="mini muted" style="margin-top:4px;">Albums created: ${created} · Duplicates skipped: ${importLog.counts.duplicatesSkipped} · Derivatives ready: ${importLog.counts.derivativesReady}</div>
+          <div class="row" style="margin-top:8px;">
+            <button id="importOpenLibraryBtn">Open Library</button>
+            <button id="importOpenCreatedAlbumsBtn">Open Created Albums</button>
+            <button id="importViewLogBtn">View Import Log</button>
+          </div>
+        `;
+
+        $('importOpenLibraryBtn').onclick = () => {
+          setTab('library');
+          refreshLibrary();
+        };
+
+        $('importOpenCreatedAlbumsBtn').onclick = async () => {
+          await refreshAlbums();
+          if (importLog.createdAlbumIds?.length) {
+            $('selectedAlbumId').value = importLog.createdAlbumIds[0];
+            setTab('albums');
+            await loadAlbum();
+          } else {
+            setTab('albums');
+          }
+        };
+
+        $('importViewLogBtn').onclick = () => {
+          $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
+        };
+      }
+
       async function runImportFlow() {
         const files = $('importFiles').files;
         if (!files.length) return $('importOut').textContent = 'Select files first.';
@@ -529,9 +566,11 @@
           });
 
           $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
+          renderImportResultPanel(upload, importLog);
           await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
         } catch (error) {
           $('importOut').textContent = `Error: ${error.message}`;
+          $('importResultPanel').style.display = 'none';
         }
       }
 
