@@ -21,3 +21,11 @@ npm install
 npm start
 npm test
 ```
+
+## UAT
+```bash
+npm run uat:seed
+npm run uat:start
+```
+- UAT Console: `http://localhost:8787/uat`
+- UAT Checklist: `http://localhost:8787/docs/UAT.md`

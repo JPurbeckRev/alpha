@@ -12,6 +12,7 @@ import {
 } from "./media.js";
 import { ensureDir, pathExists, safeMoveFile } from "./fs-utils.js";
 import { sha256File } from "./hash.js";
+import { extractMetadata } from "./metadata.js";
 
 function sanitizeFileName(name) {
   return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
@@ -57,7 +58,7 @@ function buildLogicalAssets(sourceFiles, importedAtIso) {
         type: "photo",
         takenAt: raw.takenAt ?? jpeg.takenAt ?? null,
         importedAt: importedAtIso,
-        cameraModel: null,
+        cameraModel: raw.cameraModel ?? jpeg.cameraModel ?? null,
         sourceFileIds: [raw.id, jpeg.id],
         primaryChecksum: raw.checksum,
       });
@@ -70,7 +71,7 @@ function buildLogicalAssets(sourceFiles, importedAtIso) {
         type: "photo",
         takenAt: file.takenAt ?? null,
         importedAt: importedAtIso,
-        cameraModel: null,
+        cameraModel: file.cameraModel ?? null,
         sourceFileIds: [file.id],
         primaryChecksum: file.checksum,
       });
@@ -83,7 +84,7 @@ function buildLogicalAssets(sourceFiles, importedAtIso) {
       type: "video",
       takenAt: video.takenAt ?? null,
       importedAt: importedAtIso,
-      cameraModel: null,
+      cameraModel: video.cameraModel ?? null,
       sourceFileIds: [video.id],
       primaryChecksum: video.checksum,
     });
@@ -165,6 +166,8 @@ export async function stageBatchFromUploads({ multerFiles, batchId, paths, store
     const duplicate = existingChecksums.has(checksum) || seenChecksums.has(checksum);
     seenChecksums.add(checksum);
 
+    const metadata = await extractMetadata(stagingPath, derived.kind);
+
     files.push({
       id: randomUUID(),
       originalName,
@@ -178,7 +181,9 @@ export async function stageBatchFromUploads({ multerFiles, batchId, paths, store
       checksum,
       duplicate,
       stagingPath,
-      takenAt: null,
+      takenAt: metadata.takenAt,
+      cameraModel: metadata.cameraModel,
+      metadataSource: metadata.metadataSource,
       uploadedAt: stagedAt,
     });
   }
@@ -188,6 +193,7 @@ export async function stageBatchFromUploads({ multerFiles, batchId, paths, store
     duplicateCount: files.filter((f) => f.duplicate).length,
     formats: formatBreakdown(files),
     shotsDetected: computeShotCount(files),
+    missingTakenAtCount: files.filter((f) => !f.takenAt).length,
   };
 
   const batch = {
@@ -244,6 +250,8 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
         mimeType: file.mimeType,
         storagePath: destinationPath,
         takenAt: file.takenAt,
+        cameraModel: file.cameraModel ?? null,
+        metadataSource: file.metadataSource ?? "none",
         importedAt: importedAtIso,
       });
     }

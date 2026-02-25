@@ -10,6 +10,7 @@ This file stores durable team/project memory: decisions, principles, constraints
 - Every dev round must include per-discipline voice logging (including objections/advice/guidance/admonishment/frustration).
 - Execute independently by default; escalate before likely failure.
 - HANDOFF.md must be updated every dev cycle with clear current state + next step.
+- Every completed sprint should expose a clear UAT path for PM evaluation.
 - PRD is intentionally resettable each dev round.
 
 ## Log
@@ -20,3 +21,5 @@ This file stores durable team/project memory: decisions, principles, constraints
 - 2026-02-24 22:21 PST — Jon required HANDOFF.md updates every dev cycle so project state and in-progress work are always obvious.
 - 2026-02-24 22:26 PST — Executed Sprint 1 (backend ingest foundation) and established quantified PRD progress tracking (24% complete post-sprint).
 - 2026-02-24 22:26 PST — Added RISK_ESCALATION.md with explicit pre-failure triggers and escalation format.
+- 2026-02-24 22:33 PST — Executed Sprint 2: metadata extraction, album CRUD + library read APIs, and UAT console/checklist delivered.
+- 2026-02-24 22:33 PST — Updated PRD completion estimate to 44% after Sprint 2.

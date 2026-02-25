@@ -81,3 +81,17 @@ For every dev round, log entries by team discipline. If there is a strong signal
 | 2026-02-24 22:26 | Backend | Guidance | Medium | Need metadata extraction (EXIF/container) to make day-taken grouping accurate. | Album grouping quality will be wrong/inconsistent. | Add metadata extraction pipeline as Sprint 2 story. | Backend | Open |
 | 2026-02-24 22:26 | Quality | Admonishment | High | Current tests cover happy path; missing failure/retry and large-batch behavior. | Regressions likely during scale-up. | Add negative-path and stress test cases in Sprint 2. | QA + Backend | Open |
 | 2026-02-24 22:26 | DevOps | Advice | Medium | Service has no deployment/container baseline yet. | Integration and repeatability delays later. | Add Dockerfile + env config + basic runtime checks in Sprint 2. | DevOps | Open |
+
+## Round: Round 1 — Sprint 2 Execution Review
+**Window:** 2026-02-24 → 2026-02-24
+**PRD Version:** `PRD.md` (refined 2026-02-24)
+
+| Timestamp (PST) | Discipline | Signal Type | Severity | Voice (quote or concise summary) | Impact if Ignored | Prescribed Action | Owner | Status |
+|---|---|---|---|---|---|---|---|---|
+| 2026-02-24 22:33 | Product | Guidance | Medium | Sprint 2 should end with a usable UAT path for PM evaluation. | Reduced review speed and weaker decision confidence. | Keep UAT console + checklist as standard sprint artifacts. | Build Lead | Closed |
+| 2026-02-24 22:33 | Design | Advice | Medium | Lightweight UAT UI is acceptable; production UX still needs dedicated design pass. | UX debt leaks into implementation and causes rework. | Run design contract pass before full frontend build sprint. | Design | Open |
+| 2026-02-24 22:33 | Architecture | Guidance | Medium | Library queries are growing; JSON persistence now a medium-term risk. | M3/M4 throughput will degrade due data model/query limits. | Plan migration path to SQLite/Postgres in next 1-2 sprints. | Tech Lead | Open |
+| 2026-02-24 22:33 | Frontend | Guidance | Low | Read APIs + UAT controls now unblock first real frontend integration. | None immediate. | Begin consuming timeline/assets/albums APIs in next UI sprint. | Frontend | Closed |
+| 2026-02-24 22:33 | Backend | Guidance | Low | Metadata extraction + album CRUD foundations shipped; share pipeline now critical path. | PRD progress stalls before user-visible sharing value. | Prioritize M4 derivative/share implementation in Sprint 3. | Backend | Open |
+| 2026-02-24 22:33 | Quality | Admonishment | Medium | Coverage improved, but scale/error-path tests are still thin. | Hidden regressions under larger batches or failures. | Add stress + retry + malformed input tests in Sprint 3. | QA + Backend | Open |
+| 2026-02-24 22:33 | DevOps | Advice | Medium | UAT is now clear, but deployment reproducibility is still manual. | Slower onboarding and riskier environment drift. | Add Dockerfile and baseline env templates in Sprint 3. | DevOps | Open |

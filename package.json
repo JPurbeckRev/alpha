@@ -6,7 +6,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "node --test"
+    "test": "node --test",
+    "uat:start": "node src/server.js",
+    "uat:seed": "node scripts/generate-uat-samples.js"
   },
   "keywords": [
     "photo",
@@ -17,6 +19,7 @@
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.6",
+    "exifr": "^7.1.3",
     "express": "^5.2.1",
     "multer": "^2.0.2"
   }

@@ -1,4 +1,4 @@
-# Alpha API (Current)
+# Alpha API (Sprint 2)
 
 ## Run
 ```bash
@@ -7,31 +7,32 @@ npm start
 ```
 Default URL: `http://localhost:8787`
 
-## Endpoints
+UAT Console: `http://localhost:8787/uat`
 
-### Health
-`GET /api/health`
+## Health
+### `GET /api/health`
+Returns service status + object counts.
 
-Returns basic service + object counts.
-
-### Stage Upload
-`POST /api/staging/upload`
-
+## Staging & Import
+### `POST /api/staging/upload`
 Multipart form-data:
 - field: `files` (multiple)
 
-Response:
+Returns:
 - `batchId`
 - `status`
-- `summary` (total files, duplicates, shots detected, format breakdown)
+- `summary`:
+  - `totalFiles`
+  - `duplicateCount`
+  - `formats`
+  - `shotsDetected`
+  - `missingTakenAtCount`
 
-### Batch Summary
-`GET /api/staging/:batchId`
+### `GET /api/staging/:batchId`
+Returns batch summary/status.
 
-### Execute Import
-`POST /api/imports/:batchId/execute`
-
-JSON body:
+### `POST /api/imports/:batchId/execute`
+Body:
 ```json
 {
   "createAlbums": true,
@@ -39,19 +40,69 @@ JSON body:
   "albumName": null
 }
 ```
-
 Rules:
 - `day_taken`
 - `day_imported`
 - `new_name` (requires `albumName`)
 
-### Import Log
-`GET /api/imports/:importId/log`
+### `GET /api/imports/:importId/log`
+Returns import log + counts.
 
-### Library Summary
-`GET /api/library/summary`
+## Library Read APIs
+### `GET /api/library/summary`
+Object totals for high-level status.
 
-## Notes
+### `GET /api/library/assets`
+Query params:
+- `page` (default 1)
+- `pageSize` (default 50, max 200)
+- `type=photo|video`
+- `search=<filename substring>`
+- `rawOnly=true|false`
+- `jpegOnly=true|false`
+- `cameraModel=<substring>`
+
+### `GET /api/library/timeline`
+Query params:
+- `groupBy=day_taken|day_imported`
+- `type=photo|video`
+- `page`
+- `pageSize`
+
+## Album APIs (CRUD)
+### `GET /api/albums`
+Paginated list with `assetCount`.
+
+### `POST /api/albums`
+Body:
+```json
+{ "name": "Yosemite 2026" }
+```
+
+### `GET /api/albums/:albumId`
+Returns album + paginated assets.
+
+### `PATCH /api/albums/:albumId`
+Body supports:
+- `name`
+- `sortPolicy`
+- `sharingStatus`
+- `coverAssetId`
+
+### `DELETE /api/albums/:albumId?deleteAssets=false`
+Deletes album only by default.
+
+### `POST /api/albums/:albumId/assets`
+Body:
+```json
+{ "assetIds": ["..."] }
+```
+
+### `DELETE /api/albums/:albumId/assets/:assetId`
+Removes single asset from album.
+
+## Storage Notes
 - Storage root: `storage/`
-- Originals are checksum-keyed in `storage/originals`
-- Staging batches are stored in `storage/staging`
+- Originals: `storage/originals`
+- Staging: `storage/staging`
+- Metadata DB: `storage/db.json`

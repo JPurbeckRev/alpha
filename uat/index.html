@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alpha UAT Console</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 24px; background: #0f172a; color: #e2e8f0; }
+      h1, h2 { margin-bottom: 8px; }
+      section { border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 16px; background: #111827; }
+      button { padding: 8px 12px; margin: 4px 0; cursor: pointer; }
+      input, select { padding: 8px; margin: 4px 0; min-width: 220px; }
+      pre { background: #020617; border: 1px solid #1e293b; padding: 10px; border-radius: 6px; overflow: auto; max-height: 300px; }
+      .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+      .muted { opacity: 0.8; font-size: 0.95rem; }
+      a { color: #93c5fd; }
+    </style>
+  </head>
+  <body>
+    <h1>Alpha UAT Console</h1>
+    <p class="muted">Use this page to validate Sprint 2 behavior end-to-end.</p>
+
+    <section>
+      <h2>1) Health & Summary</h2>
+      <div class="row">
+        <button id="checkHealthBtn">Check Health</button>
+        <button id="checkSummaryBtn">Check Library Summary</button>
+      </div>
+      <pre id="healthOut">(results)</pre>
+    </section>
+
+    <section>
+      <h2>2) Upload + Import</h2>
+      <div class="row">
+        <input id="filesInput" type="file" multiple />
+        <button id="uploadBtn">Upload to Staging</button>
+      </div>
+      <div class="row">
+        <label>
+          Album Rule:
+          <select id="ruleSelect">
+            <option value="day_imported">day_imported</option>
+            <option value="day_taken">day_taken</option>
+            <option value="new_name">new_name</option>
+          </select>
+        </label>
+        <input id="albumNameInput" placeholder="Album name (for new_name)" />
+        <button id="importBtn">Execute Import</button>
+      </div>
+      <p class="muted">Current Batch ID: <code id="batchIdText">none</code></p>
+      <pre id="importOut">(results)</pre>
+    </section>
+
+    <section>
+      <h2>3) Timeline / Asset Queries</h2>
+      <div class="row">
+        <button id="timelineTakenBtn">Timeline (day_taken)</button>
+        <button id="timelineImportedBtn">Timeline (day_imported)</button>
+        <button id="assetsBtn">List Assets</button>
+      </div>
+      <pre id="timelineOut">(results)</pre>
+    </section>
+
+    <section>
+      <h2>4) Album CRUD</h2>
+      <div class="row">
+        <input id="newAlbumName" placeholder="New album name" />
+        <button id="createAlbumBtn">Create Album</button>
+        <button id="listAlbumsBtn">List Albums</button>
+      </div>
+      <div class="row">
+        <input id="renameAlbumId" placeholder="Album ID" />
+        <input id="renameAlbumName" placeholder="Renamed album" />
+        <button id="renameAlbumBtn">Rename Album</button>
+      </div>
+      <div class="row">
+        <input id="deleteAlbumId" placeholder="Album ID" />
+        <button id="deleteAlbumBtn">Delete Album</button>
+      </div>
+      <pre id="albumsOut">(results)</pre>
+    </section>
+
+    <section>
+      <h2>UAT Guide</h2>
+      <p>Detailed checklist: <a href="/docs/UAT.md" target="_blank">/docs/UAT.md</a></p>
+    </section>
+
+    <script>
+      let currentBatchId = null;
+
+      async function api(url, options = {}) {
+        const res = await fetch(url, {
+          headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+          ...options,
+        });
+        const text = await res.text();
+        let body;
+        try { body = JSON.parse(text); } catch { body = { raw: text }; }
+        if (!res.ok) throw new Error(JSON.stringify(body));
+        return body;
+      }
+
+      function print(id, value) {
+        document.getElementById(id).textContent = JSON.stringify(value, null, 2);
+      }
+
+      document.getElementById("checkHealthBtn").onclick = async () => {
+        try { print("healthOut", await api("/api/health")); } catch (e) { print("healthOut", { error: String(e) }); }
+      };
+
+      document.getElementById("checkSummaryBtn").onclick = async () => {
+        try { print("healthOut", await api("/api/library/summary")); } catch (e) { print("healthOut", { error: String(e) }); }
+      };
+
+      document.getElementById("uploadBtn").onclick = async () => {
+        const files = document.getElementById("filesInput").files;
+        if (!files.length) return print("importOut", { error: "Select files first" });
+
+        const form = new FormData();
+        for (const f of files) form.append("files", f);
+
+        try {
+          const res = await fetch("/api/staging/upload", { method: "POST", body: form });
+          const body = await res.json();
+          if (!res.ok) throw new Error(JSON.stringify(body));
+          currentBatchId = body.batchId;
+          document.getElementById("batchIdText").textContent = currentBatchId;
+          print("importOut", body);
+        } catch (e) {
+          print("importOut", { error: String(e) });
+        }
+      };
+
+      document.getElementById("importBtn").onclick = async () => {
+        if (!currentBatchId) return print("importOut", { error: "Upload a batch first" });
+        const rule = document.getElementById("ruleSelect").value;
+        const albumName = document.getElementById("albumNameInput").value || null;
+
+        try {
+          const payload = { createAlbums: true, rule, albumName };
+          const body = await api(`/api/imports/${currentBatchId}/execute`, {
+            method: "POST",
+            body: JSON.stringify(payload),
+          });
+          print("importOut", body);
+        } catch (e) {
+          print("importOut", { error: String(e) });
+        }
+      };
+
+      document.getElementById("timelineTakenBtn").onclick = async () => {
+        try { print("timelineOut", await api("/api/library/timeline?groupBy=day_taken")); } catch (e) { print("timelineOut", { error: String(e) }); }
+      };
+
+      document.getElementById("timelineImportedBtn").onclick = async () => {
+        try { print("timelineOut", await api("/api/library/timeline?groupBy=day_imported")); } catch (e) { print("timelineOut", { error: String(e) }); }
+      };
+
+      document.getElementById("assetsBtn").onclick = async () => {
+        try { print("timelineOut", await api("/api/library/assets?page=1&pageSize=50")); } catch (e) { print("timelineOut", { error: String(e) }); }
+      };
+
+      document.getElementById("createAlbumBtn").onclick = async () => {
+        try {
+          const name = document.getElementById("newAlbumName").value;
+          print("albumsOut", await api("/api/albums", { method: "POST", body: JSON.stringify({ name }) }));
+        } catch (e) { print("albumsOut", { error: String(e) }); }
+      };
+
+      document.getElementById("listAlbumsBtn").onclick = async () => {
+        try { print("albumsOut", await api("/api/albums")); } catch (e) { print("albumsOut", { error: String(e) }); }
+      };
+
+      document.getElementById("renameAlbumBtn").onclick = async () => {
+        try {
+          const id = document.getElementById("renameAlbumId").value;
+          const name = document.getElementById("renameAlbumName").value;
+          print("albumsOut", await api(`/api/albums/${id}`, { method: "PATCH", body: JSON.stringify({ name }) }));
+        } catch (e) { print("albumsOut", { error: String(e) }); }
+      };
+
+      document.getElementById("deleteAlbumBtn").onclick = async () => {
+        try {
+          const id = document.getElementById("deleteAlbumId").value;
+          print("albumsOut", await api(`/api/albums/${id}`, { method: "DELETE" }));
+        } catch (e) { print("albumsOut", { error: String(e) }); }
+      };
+    </script>
+  </body>
+</html>
