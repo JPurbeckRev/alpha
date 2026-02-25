@@ -304,6 +304,71 @@
         .split { grid-template-columns: 1fr; }
         .span-8, .span-6, .span-4 { grid-column: span 12; }
       }
+
+      @media (max-width: 768px) {
+        .header-inner {
+          padding: 12px;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+        .wrap {
+          padding: 12px 10px 20px;
+        }
+        .tabs {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          padding-bottom: 4px;
+        }
+        .tab {
+          flex: 0 0 auto;
+          min-height: 42px;
+          padding: 10px 14px;
+        }
+        section {
+          padding: 10px;
+        }
+        .row {
+          gap: 8px;
+        }
+        .row > input,
+        .row > select,
+        .row > button,
+        .row > textarea,
+        .row > a {
+          flex: 1 1 100%;
+          min-width: 0;
+          width: 100%;
+        }
+        button {
+          min-height: 42px;
+        }
+        .cards {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          grid-auto-rows: 160px;
+          gap: 10px;
+        }
+        .card.feature {
+          grid-column: span 1;
+          grid-row: span 1;
+        }
+        pre {
+          font-size: 0.75rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .title {
+          font-size: 1rem;
+        }
+        h2 {
+          font-size: 1rem;
+        }
+        .cards {
+          grid-template-columns: 1fr;
+          grid-auto-rows: 220px;
+        }
+      }
       a { color: var(--accent); }
     </style>
   </head>

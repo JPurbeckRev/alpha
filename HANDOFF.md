@@ -3,11 +3,11 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 15:32
-- **Current Dev Cycle:** Round 1 (Sprint 16.1 completed)
-- **Current Status:** First-run empty-state coaching UI delivered for Library and Albums, with clear CTA routing to Import/Library so new users see guided next actions instead of blank states.
+- **Last Updated (PST):** 2026-02-25 15:39
+- **Current Dev Cycle:** Round 1 (Sprint 16.2 completed)
+- **Current Status:** Mobile responsiveness pass delivered across owner app views: mobile-friendly tab rail behavior, stacked form/action controls, touch target sizing, and adaptive media grid scaling to prevent horizontal overflow on small screens.
 - **In Progress:** None
-- **Next Prescribed Step:** Execute Sprint 16 mobile responsiveness pass.
+- **Next Prescribed Step:** Designer review + define next backlog chunk after Sprint 16 completion.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 99%
 
@@ -47,6 +47,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 14:35 | Design Agent | Product Manager (Jon) | Sprint 14 Executed | Shipped M5 Maintenance tools: added API and UI for resetting failed jobs and manual worker triggers; finalized visual theme harmonization and fixed View Density CSS selector bugs. | Perform final UAT and sign off. |
 | 2026-02-25 15:15 | Design Agent | Product Manager (Jon) | Sprint 15 Executed | Implemented Library Deletion: added full-chain deletion for assets (source files + derivatives + DB records); upgraded album deletion to prompt for optional content purge; established Designer-Implementer workflow protocol. | Kick off Sprint 16: Mobile UI pass. |
 | 2026-02-25 15:32 | Executor Agent | Design Agent | Sprint 16.1 Executed | Implemented first-run empty-state coaching UI for Library Timeline, Albums list, and empty album detail view. Added clear CTA routing (Go to Import / Open Library) to avoid blank first-run surfaces. Smoke UAT passed. | Hand off Sprint 16.2 mobile responsiveness pass. |
+| 2026-02-25 15:39 | Executor Agent | Design Agent | Sprint 16.2 Executed | Delivered mobile responsiveness pass in owner UI: responsive tab rail behavior, stacked mobile form/button layout, larger tap targets, and mobile grid behavior (2-column <=768px, 1-column <=480px) with hero-card span normalization to eliminate overflow. Smoke UAT passed; manually checked at 375x812 viewport. | Designer review and issue next implementation packet. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.
@@ -56,3 +57,55 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 - If blocked, state blocker and owner explicitly in Notes.
 - Any blocker raised in `TEAM_VOICES.md` must be referenced here before progressing.
 - Never overwrite history; handoff entries are append-only.
+
+## Task Packets
+
+### Sprint 16.1 (Empty States)
+```md
+Task ID: Sprint-16.1-Empty-States
+Goal: Implement first-run empty state coaching UI for the library and albums to guide new users on how to get started.
+Scope (files allowed):
+- Frontend HTML/JS/CSS files associated with the owner site (e.g., `public/app/index.html`, `public/app/style.css`, `public/app/app.js` or equivalent UI files).
+Non-goals:
+- Do not implement the mobile responsiveness pass in this chunk.
+- Do not change existing backend APIs or routing.
+Implementation notes:
+- When the user's library has 0 items, display a friendly, centered empty state in the Library/Home tab explaining how to upload and import.
+- Provide a clear call-to-action (CTA) button or pointer directing them to the Import tab.
+- When an album has 0 items (or the album list is empty), provide similar coaching text explaining how to create an album from the library.
+Acceptance criteria:
+- User sees a helpful empty state message instead of a blank screen when the library has no photos.
+- User sees a helpful empty state message instead of a blank screen when there are no albums.
+- The UI contains clear instructions or a CTA on what to do next (e.g., "Go to Import").
+Validation commands:
+- `npm run uat:smoke` (ensure we haven't broken existing flows)
+- Manually verify the UI at `http://localhost:8787/app` with a fresh/empty database.
+Commit message suggestion:
+feat(ui): add first-run empty state coaching for library and albums
+```
+
+### Sprint 16.2 (Mobile Responsiveness)
+```md
+Task ID: Sprint-16.2-Mobile-Responsiveness
+Goal: Execute a mobile responsiveness pass across the primary views (Library, Albums, Sharing, Studio) to ensure usability on smaller screens.
+Scope (files allowed):
+- Frontend HTML/JS/CSS files associated with the owner site (e.g., `public/app/index.html`, `public/app/style.css`, `public/app/app.js` or equivalent UI files).
+Non-goals:
+- Do not add new features or rework backend logic.
+- Do not redesign the desktop experience.
+Implementation notes:
+- Implement responsive CSS using media queries (e.g., max-width: 768px).
+- Stack navigation tabs or convert to a mobile-friendly bottom bar or hamburger menu if they overflow.
+- Ensure the photo grid adapts gracefully (e.g., change from 4/5 columns on desktop to 1/2 columns on mobile).
+- Fix any horizontal scrolling issues caused by wide cards or unconstrained text.
+- Ensure buttons and touch targets have adequate spacing for tapping on mobile devices.
+Acceptance criteria:
+- The site renders correctly without horizontal scrolling on a standard mobile viewport (e.g., 375px width).
+- Core actions (viewing library, creating album, viewing settings) are easily accessible and tappable on mobile screens.
+- Photo grids adjust to smaller column counts on mobile devices.
+Validation commands:
+- `npm run uat:smoke` (ensure we haven't broken existing flows)
+- Manually verify the UI at `http://localhost:8787/app` using browser DevTools device emulation (e.g., iPhone size).
+Commit message suggestion:
+feat(ui): implement mobile responsiveness pass for main app views
+```
