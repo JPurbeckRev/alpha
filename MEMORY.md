@@ -28,3 +28,4 @@ This file stores durable team/project memory: decisions, principles, constraints
 - 2026-02-24 22:44 PST — Published stronger UAT path (console + checklist + smoke script) for PM evaluation.
 - 2026-02-24 22:44 PST — Updated PRD completion estimate to 53% after Sprint 3.
 - 2026-02-24 22:46 PST — Jon clarified preference: provide a sprint evaluation site experience, not a UAT dashboard/panel framing.
+- 2026-02-24 22:50 PST — Jon raised a design concern: current product evolution feels non-organic for photo/video user behavior; requested formal design assessment before further build work.
