@@ -197,6 +197,23 @@ app.get("/api/health", async (_req, res) => {
   });
 });
 
+app.get("/api/owner/settings", async (_req, res) => {
+  const db = await store.read();
+  return res.json(db.settings);
+});
+
+app.patch("/api/owner/settings", async (req, res) => {
+  try {
+    const settings = await store.update((db) => {
+      db.settings = { ...db.settings, ...(req.body ?? {}) };
+      return db.settings;
+    });
+    return res.json(settings);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 app.post("/api/staging/upload", (req, res) => {
   upload.array("files", limits.maxFilesPerBatch)(req, res, async (err) => {
     if (err) {

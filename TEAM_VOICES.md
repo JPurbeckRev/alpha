@@ -140,12 +140,12 @@ For every dev round, log entries by team discipline. If there is a strong signal
 | 2026-02-24 23:15 | Frontend | Guidance | Low | Job controls in Home tab improve observability for owner. | Harder to debug conversion backlog from UI. | Keep job visibility and status summaries prominent. | Frontend | Closed |
 | 2026-02-24 23:15 | Backend | Guidance | Medium | Added conversion jobs and retry, but ffmpeg dependency handling remains fragile. | Jobs may fail silently if converter toolchain missing. | Add explicit tool capability checks and UX warnings in Sprint 6. | Backend | Open |
 | 2026-02-24 23:15 | Quality | Advice | Medium | Need stronger assertions around queued/retried/failed job states. | Regression risk in conversion lifecycle. | Expand tests for retry/backoff paths and failure reporting. | QA + Backend | Open |
-## Round: Round 1 — Sprint 12 Execution Review
+## Round: Round 1 — Sprint 13 Execution Review
 **Window:** 2026-02-25 → 2026-02-25
 **PRD Version:** `PRD.md`
 
 | Timestamp (PST) | Discipline | Signal Type | Severity | Voice (quote or concise summary) | Impact if Ignored | Prescribed Action | Owner | Status |
 |---|---|---|---|---|---|---|---|---|
-| 2026-02-25 10:18 | Design | Advice | Low | "Visual rhythm is now established; next step should be persistent owner preferences to allow personalization without bloating the UI." | Experience feels static over time. | Plan persistent settings for Sprint 13. | Design | Open |
-| 2026-02-25 10:18 | Architecture | Advice | Medium | "Rate limit fix is a temporary patch; move to token-bucket or sliding-window for sharing endpoints in M5." | Fragility under extreme load. | Refine rate limiter during M5 hardening. | Tech Lead | Open |
-| 2026-02-25 10:18 | Product | Guidance | Low | Storytelling pass is a significant upgrade; keep the density budget tight as new features arrive. | UI regression to 'tool' feel. | Enforce density controls in future sprints. | PM | Open |
+| 2026-02-25 10:48 | Design | Guidance | Low | "Settings tab successfully bridges the gap between 'tool' and 'product'. Visual consistency is strong across themes." | None. | Maintain theme compatibility for all new components. | Design | Open |
+| 2026-02-25 10:48 | Architecture | Advice | Medium | "Settings persistence is lightweight JSON; ensure large-scale migrations are handled gracefully if the schema changes." | Potential settings reset for users. | Add migration safety to store.js. | Tech Lead | Open |
+| 2026-02-25 10:48 | Frontend | Frustration | Low | "CSS variable management is getting more complex; consider a formal design system approach if adding more themes." | CSS maintainability risk. | Refactor to design tokens if scope expands. | Frontend | Open |

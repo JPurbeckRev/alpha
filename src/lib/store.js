@@ -13,6 +13,11 @@ function defaultDb() {
     albums: [],
     albumAssets: [],
     shares: [],
+    settings: {
+      theme: "dark",
+      viewMode: "comfortable",
+      defaultGrouping: "day_taken",
+    },
   };
 }
 
@@ -27,6 +32,7 @@ function normalizeDb(db) {
   normalized.albums = Array.isArray(normalized.albums) ? normalized.albums : [];
   normalized.albumAssets = Array.isArray(normalized.albumAssets) ? normalized.albumAssets : [];
   normalized.shares = Array.isArray(normalized.shares) ? normalized.shares : [];
+  normalized.settings = normalized.settings ?? defaultDb().settings;
   return normalized;
 }
 
