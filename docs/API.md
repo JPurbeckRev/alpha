@@ -1,4 +1,4 @@
-# Alpha API (Sprint 5)
+# Alpha API (Sprint 6)
 
 ## Run
 ```bash
@@ -120,9 +120,20 @@ Trigger queued derivative conversions.
 
 Body:
 ```json
-{ "limit": 20, "force": true }
+{ "limit": 20, "force": true, "staleMs": 300000 }
 ```
 - `force=true` ignores backoff windows and runs eligible queued/failed jobs immediately.
+- `staleMs` controls when `processing` jobs are considered stale and auto-recovered back to queue before scanning.
+
+### `GET /api/jobs/derivatives/worker`
+Background derivative worker status:
+- enabled/disabled
+- interval
+- running state
+- last run timestamp/result
+
+### `POST /api/jobs/derivatives/worker/run`
+Trigger one immediate worker tick (non-forced queue pass).
 
 ## Shares
 ### `GET /api/shares`

@@ -4,6 +4,8 @@ import { execFile } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { ensureDir } from "./fs-utils.js";
 
+const toolAvailabilityCache = new Map();
+
 function nowIso() {
   return new Date().toISOString();
 }
@@ -27,12 +29,49 @@ function runExecFile(bin, args) {
     execFile(bin, args, { windowsHide: true }, (error, stdout, stderr) => {
       if (error) {
         const msg = stderr?.toString()?.trim() || stdout?.toString()?.trim() || error.message;
-        reject(new Error(msg));
+        const wrapped = new Error(msg);
+        wrapped.code = error.code;
+        reject(wrapped);
         return;
       }
       resolve({ stdout, stderr });
     });
   });
+}
+
+async function detectBinary(bin) {
+  if (toolAvailabilityCache.has(bin)) return toolAvailabilityCache.get(bin);
+
+  try {
+    await runExecFile(bin, ["-version"]);
+    toolAvailabilityCache.set(bin, true);
+    return true;
+  } catch {
+    toolAvailabilityCache.set(bin, false);
+    return false;
+  }
+}
+
+export function requiredBinaryForTarget(targetFormat) {
+  if (targetFormat === "mp4" || targetFormat === "jpeg") return "ffmpeg";
+  return null;
+}
+
+export async function canRunJob(job) {
+  const bin = requiredBinaryForTarget(job.targetFormat);
+  if (!bin) return { ok: false, reason: `No converter configured for ${job.targetFormat}` };
+  const available = await detectBinary(bin);
+  if (!available) return { ok: false, reason: `${bin} is not installed or not on PATH` };
+  return { ok: true, bin };
+}
+
+function isNonRetryableConversionError(error) {
+  if (!error) return false;
+  const code = String(error.code ?? "").toUpperCase();
+  if (["ENOENT", "EACCES"].includes(code)) return true;
+
+  const msg = String(error.message ?? "").toLowerCase();
+  return msg.includes("not installed") || msg.includes("not on path") || msg.includes("no converter configured");
 }
 
 async function transcodeWithFfmpeg({ sourcePath, outputPath, targetFormat }) {
@@ -132,9 +171,30 @@ export function listDerivativeJobs(db) {
   );
 }
 
-export async function processDerivativeJobs({ db, paths, limit = 10, force = false }) {
+export function recoverStaleDerivativeJobs(db, { staleMs = 5 * 60_000 } = {}) {
+  const now = Date.now();
+  let recovered = 0;
+
+  for (const job of db.derivativeJobs ?? []) {
+    if (job.status !== "processing") continue;
+    const updatedAt = new Date(job.updatedAt ?? job.createdAt ?? 0).getTime();
+    if (Number.isNaN(updatedAt)) continue;
+    if (now - updatedAt < staleMs) continue;
+
+    job.status = "queued";
+    job.updatedAt = nowIso();
+    job.nextRunAt = nowIso();
+    job.lastError = "Recovered stale processing job for retry";
+    recovered += 1;
+  }
+
+  return recovered;
+}
+
+export async function processDerivativeJobs({ db, paths, limit = 10, force = false, staleMs = 5 * 60_000 }) {
   await ensureDir(paths.derivativesRoot);
 
+  const recovered = recoverStaleDerivativeJobs(db, { staleMs });
   const now = Date.now();
   const jobs = (db.derivativeJobs ?? [])
     .filter((job) => {
@@ -151,9 +211,11 @@ export async function processDerivativeJobs({ db, paths, limit = 10, force = fal
 
   const summary = {
     scanned: jobs.length,
+    recovered,
     completed: 0,
     failed: 0,
     requeued: 0,
+    nonRetryableFailures: 0,
   };
 
   for (const job of jobs) {
@@ -168,6 +230,18 @@ export async function processDerivativeJobs({ db, paths, limit = 10, force = fal
       job.updatedAt = nowIso();
       job.nextRunAt = new Date(Date.now() + backoffMs(job.attempts)).toISOString();
       summary.failed += 1;
+      continue;
+    }
+
+    const capability = await canRunJob(job);
+    if (!capability.ok) {
+      job.status = "failed";
+      job.attempts = Number(job.maxAttempts ?? 3);
+      job.lastError = capability.reason;
+      job.updatedAt = nowIso();
+      job.nextRunAt = null;
+      summary.failed += 1;
+      summary.nonRetryableFailures += 1;
       continue;
     }
 
@@ -203,11 +277,14 @@ export async function processDerivativeJobs({ db, paths, limit = 10, force = fal
       job.completedAt = nowIso();
       summary.completed += 1;
     } catch (error) {
-      job.attempts = Number(job.attempts ?? 0) + 1;
+      const nonRetryable = isNonRetryableConversionError(error);
+      job.attempts = nonRetryable
+        ? Number(job.maxAttempts ?? 3)
+        : Number(job.attempts ?? 0) + 1;
       job.lastError = error?.message || "Unknown conversion error";
       job.updatedAt = nowIso();
 
-      if (job.attempts < Number(job.maxAttempts ?? 3)) {
+      if (!nonRetryable && job.attempts < Number(job.maxAttempts ?? 3)) {
         job.status = "queued";
         job.nextRunAt = new Date(Date.now() + backoffMs(job.attempts)).toISOString();
         summary.requeued += 1;
@@ -215,6 +292,7 @@ export async function processDerivativeJobs({ db, paths, limit = 10, force = fal
         job.status = "failed";
         job.nextRunAt = null;
         summary.failed += 1;
+        if (nonRetryable) summary.nonRetryableFailures += 1;
       }
     }
   }

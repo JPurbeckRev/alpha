@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-24 23:15
-- **Current Dev Cycle:** Round 1 (Sprint 5 completed)
-- **Current Status:** Owner-first end-to-end flow is live and usable; conversion reliability hardening is next.
-- **In Progress:** None (awaiting Sprint 6 kickoff)
-- **Next Prescribed Step:** Execute Sprint 6 focused on conversion reliability (tool detection/fallbacks) and dedicated worker/scheduling hardening.
+- **Last Updated (PST):** 2026-02-25 08:36
+- **Current Dev Cycle:** Round 1 (Sprint 6 completed)
+- **Current Status:** Conversion pipeline reliability hardening shipped (tool preflight + stale-job recovery + background worker scheduler).
+- **In Progress:** None (awaiting Sprint 7 kickoff)
+- **Next Prescribed Step:** Execute Sprint 7 for richer import-complete destination UX and stronger share confidence cues (password/expiry transparency + recipient trust messaging).
 - **Open Blockers:** None
-- **Overall PRD Completion (estimate):** 61%
+- **Overall PRD Completion (estimate):** 69%
 
 ### Project Snapshot (primary experience)
 - **Primary experience now:** Upload batch → explicit import → optional album creation (Day Taken / Day Imported / New Name) → browse library/albums → create protected share links.
@@ -36,6 +36,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-24 22:52 | Build Team | Product Manager (Jon) | Design Prework + Owner Site Delivered | Completed requested design artifacts (`DESIGN_ASSESSMENT.md`, `UX_FLOW_MAP.md`, `WIREFRAME_SPEC.md`, `DESIGN_GATE_CHECKLIST.md`) and shipped a maximal-privilege owner site at `/app` (alias `/uat`) with integrated import, browse, albums, sharing, and share-page experience. | PM review and sign-off on design gate checklist; then execute Sprint 4 implementation scope. |
 | 2026-02-24 23:09 | Build Team | Product Manager (Jon) | Sprint 4 Executed | Executed additional sprint after PM visual feedback: fixed severe color banding on owner/share pages, elevated visual quality, and finalized owner-first workflow/API fit. Design-gate artifacts completed and applied in implementation. | Kick off Sprint 5: ARW/MTS conversion workers + queued derivative processing + security/hardening pass. |
 | 2026-02-24 23:15 | Build Team | Product Manager (Jon) | Sprint 5 Executed | Implemented derivative conversion job queue with retry/backoff, job APIs, owner-site job controls, and safer file serving. Updated docs and smoke validation. | Kick off Sprint 6: improve ARW/MTS conversion reliability and move conversion execution toward dedicated worker scheduling. |
+| 2026-02-25 08:36 | Build Team | Product Manager (Jon) | Sprint 6 Executed | Shipped conversion reliability hardening: converter preflight detection, non-retryable failure classification, stale-processing job recovery, worker status/tick APIs, and interval-based background worker scheduling; surfaced worker health in owner Home panel and expanded API/test coverage. | Kick off Sprint 7: strengthen import-complete narrative + recipient trust/clarity experience on sharing surfaces. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

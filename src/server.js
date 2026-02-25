@@ -36,6 +36,13 @@ const port = Number(process.env.PORT || 8787);
 const store = new JsonStore(paths.dbPath);
 const shareRateLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 120 });
 
+const jobWorkerEnabled = asBoolean(process.env.ALPHA_JOB_WORKER_ENABLED, true);
+const jobWorkerIntervalMs = Math.max(5_000, Number(process.env.ALPHA_JOB_WORKER_INTERVAL_MS || 30_000));
+let jobWorkerTimer = null;
+let jobWorkerRunning = false;
+let jobWorkerLastRunAt = null;
+let jobWorkerLastResult = null;
+
 function clientKey(req) {
   return req.ip || req.headers["x-forwarded-for"] || "unknown";
 }
@@ -117,6 +124,39 @@ function asBoolean(value, fallback = false) {
   if (typeof value === "boolean") return value;
   const normalized = String(value).toLowerCase();
   return ["1", "true", "yes", "on"].includes(normalized);
+}
+
+async function runDerivativeWorkerTick() {
+  if (jobWorkerRunning) {
+    return { skipped: true, reason: "worker_already_running" };
+  }
+
+  jobWorkerRunning = true;
+  jobWorkerLastRunAt = new Date().toISOString();
+  try {
+    const result = await store.update((db) =>
+      processDerivativeJobs({
+        db,
+        paths,
+        limit: 20,
+        force: false,
+      }),
+    );
+    jobWorkerLastResult = result;
+    return result;
+  } finally {
+    jobWorkerRunning = false;
+  }
+}
+
+function startDerivativeWorker() {
+  if (!jobWorkerEnabled || jobWorkerTimer) return;
+
+  jobWorkerTimer = setInterval(() => {
+    runDerivativeWorkerTick().catch(() => {
+      // no-op: state is surfaced via worker status endpoint
+    });
+  }, jobWorkerIntervalMs);
 }
 
 async function bootstrap() {
@@ -448,7 +488,27 @@ app.post("/api/jobs/derivatives/run", async (req, res) => {
   try {
     const limit = normalizePageSize(req.body?.limit, 10, 100);
     const force = asBoolean(req.body?.force, false);
-    const result = await store.update((db) => processDerivativeJobs({ db, paths, limit, force }));
+    const staleMs = Number(req.body?.staleMs || 5 * 60_000);
+    const result = await store.update((db) => processDerivativeJobs({ db, paths, limit, force, staleMs }));
+    return res.json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/api/jobs/derivatives/worker", (_req, res) => {
+  return res.json({
+    enabled: jobWorkerEnabled,
+    intervalMs: jobWorkerIntervalMs,
+    running: jobWorkerRunning,
+    lastRunAt: jobWorkerLastRunAt,
+    lastResult: jobWorkerLastResult,
+  });
+});
+
+app.post("/api/jobs/derivatives/worker/run", async (_req, res) => {
+  try {
+    const result = await runDerivativeWorkerTick();
     return res.json(result);
   } catch (error) {
     return res.status(400).json({ error: error.message });
@@ -541,6 +601,7 @@ app.get("/api/shares/:token/assets/:assetId/file", withShareRateLimit, async (re
 
 bootstrap()
   .then(() => {
+    startDerivativeWorker();
     app.listen(port, () => {
       // eslint-disable-next-line no-console
       console.log(`Alpha API listening on http://localhost:${port}`);
