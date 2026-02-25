@@ -66,3 +66,4 @@ For every dev round, log entries by team discipline. If there is a strong signal
 | 2026-02-24 22:19 | Backend | Guidance | Low | No strong signal this round. | None. | Capture API/data constraints during story definition. | Backend | Open |
 | 2026-02-24 22:19 | Quality | Guidance | Low | No strong signal this round. | None. | Add risk-based test strategy once backlog is drafted. | QA | Open |
 | 2026-02-24 22:19 | DevOps | Guidance | Low | No strong signal this round. | None. | Define deploy/observability baseline during implementation planning. | DevOps | Open |
+| 2026-02-24 22:21 | Product | Admonishment | High | "Update HANDOFF.md every dev cycle so I never wonder where we left off or what is in progress." | Loss of execution clarity, avoidable status ambiguity, PM context lag. | Make HANDOFF.md cycle-close mandatory with authoritative Current State refresh. | Build Lead | Open |

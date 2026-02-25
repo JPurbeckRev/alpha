@@ -6,5 +6,5 @@ Project workspace for Alpha.
 - `SPRINT_TEAM_PERSONAS.md` — domain personas and guiding principles
 - `PRD.md` — intentionally blank per dev round
 - `MEMORY.md` — durable project thoughts/decisions
-- `HANDOFF.md` — timestamped handoff progression log
+- `HANDOFF.md` — authoritative current state + timestamped handoff progression log (updated every dev cycle)
 - `TEAM_VOICES.md` — per-round discipline voices (objections/advice/guidance/admonishments/frustration)
