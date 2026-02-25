@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createAlbumShare, validateShareAccess, listShareAssets } from "../src/lib/shares.js";
+import { createAlbumShare, listShareAssets, listShares, revokeShare, validateShareAccess } from "../src/lib/shares.js";
 
 function dbFixture() {
   return {
@@ -46,4 +46,18 @@ test("share listing uses derivative availability", () => {
 
   assert.equal(payload.assets.length, 1);
   assert.equal(payload.assets[0].hasShareDerivative, true);
+});
+
+test("share list + revoke behavior", () => {
+  const db = dbFixture();
+  const created = createAlbumShare(db, "album-1", {});
+
+  const listed = listShares(db);
+  assert.equal(listed.length, 1);
+  assert.equal(listed[0].albumName, "A");
+
+  const revoked = revokeShare(db, created.share.id);
+  assert.equal(revoked.revoked, true);
+  assert.equal(db.shares.length, 0);
+  assert.equal(db.albums[0].sharingStatus, "off");
 });

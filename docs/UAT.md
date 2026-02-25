@@ -1,8 +1,8 @@
-# UAT Guide (Sprint 3)
+# Sprint Evaluation Guide
 
-This environment is prepared for PM/Creative Director validation through Sprint 3 scope.
+This guide is for evaluating each sprint through the **actual owner site experience**.
 
-## 1) Start UAT Environment
+## Start
 ```bash
 npm install
 npm run uat:seed
@@ -10,75 +10,61 @@ npm run uat:start
 ```
 
 Open:
-- Sprint Review Site: `http://localhost:8787/uat`
-- API Docs: `http://localhost:8787/docs/API.md`
+- Owner Site: `http://localhost:8787/app`
+- Alias: `http://localhost:8787/uat`
+- API docs: `http://localhost:8787/docs/API.md`
 
-## 2) Minimum UAT Flow (Expected Pass)
+## Evaluation Flow
 
-### A. Health baseline
-1. Click **Check Health**
-2. Click **Check Library Summary**
+### 1) Home snapshot
+- Confirm health badge and project counters load.
 
-Expected:
-- `ok: true`
-- counts include `derivatives` and `shares`
-
-### B. Upload + import + album rule
-1. Upload files from `uat/sample_media`
-2. Run import with each rule over separate batches:
-   - `day_imported`
-   - `day_taken`
-   - `new_name`
+### 2) Import flow
+- Import sample media with each album rule:
+  - by day imported
+  - by day taken
+  - by custom album name
 
 Expected:
-- import log returns without error
-- duplicate content is skipped
-- album creation reflects selected rule
-- derivative counts appear in import log (`derivativesReady`, `derivativesUnavailable`)
+- import result appears
+- albums/assets counts increase
+- derivative readiness appears in import log
 
-### C. Validate read APIs
-1. Click **Timeline (day_taken)** and **Timeline (day_imported)**
-2. Click **List Assets**
-
-Expected:
-- timeline groups by day
-- assets are paginated and queryable
-
-### D. Validate album CRUD
-1. Create album
-2. Rename album
-3. Delete album
+### 3) Library flow
+- Browse timeline by day taken/day imported.
+- Filter by type and search.
+- Validate previews and owner download links.
 
 Expected:
-- operations reflect immediately in list APIs
+- media cards render
+- fallback behavior appears when preview unavailable
 
-### E. Validate sharing (Sprint 3)
-1. From **List Albums**, copy an album ID with assets
-2. In sharing section, create a share:
-   - without password, then with password
-3. Open share payload by token
-4. For protected share, verify wrong/missing password fails, correct password succeeds
+### 4) Album curation flow
+- Create an album.
+- Open album and add/remove assets.
+- Rename and delete album.
 
 Expected:
-- tokenized share object returned
-- shared payload includes derivative URLs only (`/api/shares/:token/assets/:assetId/file`)
-- expired share (if tested) returns access failure
+- operations reflect immediately in album list/detail.
 
-## 3) Quick Smoke Test
+### 5) Sharing flow
+- Create share (with and without password).
+- Open public share page.
+- Validate revoke flow from owner site.
+
+Expected:
+- share page loads derivative-only media.
+- password-protected share blocks unauthorized access.
+- revoked share no longer accessible.
+
+## Quick smoke
 With server running:
 ```bash
-node scripts/smoke-uat.mjs
+npm run uat:smoke
 ```
 
-Expected:
-- JSON output with healthy status and nonzero imported assets
+Expected: JSON output including health/import/share checks.
 
-## 4) Sprint 3 Exit Criteria
-- [ ] Share links can be created for albums
-- [ ] Password + expiry controls function
-- [ ] Share file endpoint serves derivative content only
-- [ ] UAT console can drive end-to-end validation without command-line API calls
-
-## 5) Notes / Current Limits
-- Derivative generation currently supports web-friendly source files already in JPEG/MP4 form.
-- ARW/MTS derivative conversion pipeline is not complete yet and will be expanded in follow-on sprint work.
+## Known limits
+- ARW and MTS full conversion pipeline is still pending.
+- Derivative support currently favors JPEG/MP4 inputs.

@@ -88,3 +88,43 @@ export function listShareAssets(db, share) {
     }),
   };
 }
+
+export function listShares(db) {
+  const albumById = new Map(db.albums.map((a) => [a.id, a]));
+  return db.shares
+    .map((share) => {
+      const album = albumById.get(share.albumId);
+      return {
+        id: share.id,
+        token: share.token,
+        albumId: share.albumId,
+        albumName: album?.name ?? "Unknown album",
+        createdAt: share.createdAt,
+        expiresAt: share.expiresAt,
+        requiresPassword: Boolean(share.passwordHash),
+        isExpired: Boolean(share.expiresAt && new Date(share.expiresAt).getTime() <= Date.now()),
+        shareUrl: `/api/shares/${share.token}`,
+        publicPageUrl: `/app/share.html?token=${share.token}`,
+      };
+    })
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+export function revokeShare(db, shareId) {
+  const index = db.shares.findIndex((s) => s.id === shareId);
+  if (index < 0) throw new Error("Share not found");
+
+  const [removed] = db.shares.splice(index, 1);
+  const album = db.albums.find((a) => a.id === removed.albumId);
+  if (album) {
+    const stillHasShares = db.shares.some((s) => s.albumId === album.id);
+    album.sharingStatus = stillHasShares ? album.sharingStatus : "off";
+    album.updatedAt = nowIso();
+  }
+
+  return {
+    revoked: true,
+    shareId: removed.id,
+    albumId: removed.albumId,
+  };
+}

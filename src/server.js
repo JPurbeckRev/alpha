@@ -8,7 +8,7 @@ import { ensureDir } from "./lib/fs-utils.js";
 import { JsonStore } from "./lib/store.js";
 import { executeImport, stageBatchFromUploads } from "./lib/importer.js";
 import { normalizePage, normalizePageSize } from "./lib/paginate.js";
-import { queryAssets, timelineByDay } from "./lib/library.js";
+import { hydrateAssets, queryAssets, timelineByDay } from "./lib/library.js";
 import {
   addAssetsToAlbum,
   createAlbum,
@@ -20,7 +20,14 @@ import {
 } from "./lib/albums.js";
 import { latestReadyShareDerivative } from "./lib/derivatives.js";
 import { createMemoryRateLimiter } from "./lib/rate-limit.js";
-import { createAlbumShare, getShareByToken, listShareAssets, validateShareAccess } from "./lib/shares.js";
+import {
+  createAlbumShare,
+  getShareByToken,
+  listShareAssets,
+  listShares,
+  revokeShare,
+  validateShareAccess,
+} from "./lib/shares.js";
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
@@ -34,6 +41,61 @@ function clientKey(req) {
 
 function sharePassword(req) {
   return req.query.password ?? req.headers["x-share-password"] ?? null;
+}
+
+function ext(name = "") {
+  const i = name.lastIndexOf(".");
+  return i >= 0 ? name.slice(i).toLowerCase() : "";
+}
+
+function sourceMime(name = "") {
+  const e = ext(name);
+  if (e === ".jpg" || e === ".jpeg") return "image/jpeg";
+  if (e === ".mp4") return "video/mp4";
+  if (e === ".mts") return "video/mp2t";
+  if (e === ".arw") return "image/x-sony-arw";
+  return "application/octet-stream";
+}
+
+function pickOwnerPreviewSource(sourceFiles = []) {
+  const jpeg = sourceFiles.find((sf) => [".jpg", ".jpeg"].includes(ext(sf.originalName)));
+  if (jpeg) return jpeg;
+
+  const mp4 = sourceFiles.find((sf) => ext(sf.originalName) === ".mp4");
+  if (mp4) return mp4;
+
+  return null;
+}
+
+function withShareRateLimit(req, res, next) {
+  const bucket = shareRateLimiter.check(clientKey(req));
+  if (!bucket.allowed) {
+    const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - Date.now()) / 1000));
+    res.setHeader("Retry-After", String(retryAfter));
+    return res.status(429).json({ error: "Too many share requests. Slow down." });
+  }
+  return next();
+}
+
+function scrubAsset(asset) {
+  return {
+    ...asset,
+    sourceFiles: (asset.sourceFiles ?? []).map((sf) => ({
+      id: sf.id,
+      originalName: sf.originalName,
+      ext: sf.ext,
+      kind: sf.kind,
+      raw: sf.raw,
+      jpeg: sf.jpeg,
+      checksum: sf.checksum,
+      size: sf.size,
+      mimeType: sf.mimeType,
+      takenAt: sf.takenAt,
+      importedAt: sf.importedAt,
+      metadataSource: sf.metadataSource,
+      downloadUrl: `/api/owner/source-files/${sf.id}/download`,
+    })),
+  };
 }
 
 function asBoolean(value, fallback = false) {
@@ -56,8 +118,13 @@ const upload = multer({ dest: paths.tempUploads });
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
-app.use("/uat", express.static(path.join(paths.root, "uat")));
+app.use("/app", express.static(path.join(paths.root, "app")));
+app.use("/uat", express.static(path.join(paths.root, "app")));
 app.use("/docs", express.static(path.join(paths.root, "docs")));
+
+app.get("/", (_req, res) => res.redirect("/app"));
+app.get("/app", (_req, res) => res.sendFile(path.join(paths.root, "app", "index.html")));
+app.get("/uat", (_req, res) => res.sendFile(path.join(paths.root, "app", "index.html")));
 
 app.get("/api/health", async (_req, res) => {
   const db = await store.read();
@@ -179,7 +246,56 @@ app.get("/api/library/assets", async (req, res) => {
     pageSize: normalizePageSize(req.query.pageSize, 50, 200),
   });
 
-  return res.json(result);
+  return res.json({
+    ...result,
+    items: result.items.map((asset) => ({
+      ...scrubAsset(asset),
+      previewUrl: `/api/owner/assets/${asset.id}/preview`,
+    })),
+  });
+});
+
+app.get("/api/library/assets/:assetId", async (req, res) => {
+  const db = await store.read();
+  const asset = hydrateAssets(db).find((a) => a.id === req.params.assetId);
+  if (!asset) return res.status(404).json({ error: "Asset not found" });
+
+  return res.json({
+    ...scrubAsset(asset),
+    previewUrl: `/api/owner/assets/${asset.id}/preview`,
+  });
+});
+
+app.get("/api/owner/assets/:assetId/preview", async (req, res) => {
+  const db = await store.read();
+  const asset = hydrateAssets(db).find((a) => a.id === req.params.assetId);
+  if (!asset) return res.status(404).json({ error: "Asset not found" });
+
+  const derivative = latestReadyShareDerivative(db, asset.id);
+  if (derivative?.storagePath) {
+    res.setHeader("Content-Type", derivative.mimeType || "application/octet-stream");
+    res.setHeader("Cache-Control", "private, max-age=120");
+    return res.sendFile(derivative.storagePath);
+  }
+
+  const fallback = pickOwnerPreviewSource(asset.sourceFiles);
+  if (!fallback?.storagePath) {
+    return res.status(415).json({ error: "Preview not available for this asset yet" });
+  }
+
+  res.setHeader("Content-Type", sourceMime(fallback.originalName));
+  res.setHeader("Cache-Control", "private, max-age=60");
+  return res.sendFile(fallback.storagePath);
+});
+
+app.get("/api/owner/source-files/:sourceFileId/download", async (req, res) => {
+  const db = await store.read();
+  const sourceFile = db.sourceFiles.find((sf) => sf.id === req.params.sourceFileId);
+  if (!sourceFile) return res.status(404).json({ error: "Source file not found" });
+
+  res.setHeader("Content-Type", sourceFile.mimeType || sourceMime(sourceFile.originalName));
+  res.setHeader("Content-Disposition", `attachment; filename=\"${sourceFile.originalName}\"`);
+  return res.sendFile(sourceFile.storagePath);
 });
 
 app.get("/api/library/timeline", async (req, res) => {
@@ -192,7 +308,16 @@ app.get("/api/library/timeline", async (req, res) => {
     pageSize: normalizePageSize(req.query.pageSize, 30, 100),
   });
 
-  return res.json(result);
+  return res.json({
+    ...result,
+    items: result.items.map((dayGroup) => ({
+      ...dayGroup,
+      assets: dayGroup.assets.map((asset) => ({
+        ...scrubAsset(asset),
+        previewUrl: `/api/owner/assets/${asset.id}/preview`,
+      })),
+    })),
+  });
 });
 
 app.get("/api/albums", async (req, res) => {
@@ -221,7 +346,14 @@ app.get("/api/albums/:albumId", async (req, res) => {
   });
 
   if (!album) return res.status(404).json({ error: "Album not found" });
-  return res.json(album);
+
+  return res.json({
+    ...album,
+    assets: album.assets.map((asset) => ({
+      ...scrubAsset(asset),
+      previewUrl: `/api/owner/assets/${asset.id}/preview`,
+    })),
+  });
 });
 
 app.patch("/api/albums/:albumId", async (req, res) => {
@@ -263,15 +395,11 @@ app.delete("/api/albums/:albumId/assets/:assetId", async (req, res) => {
   }
 });
 
-app.use("/api/shares", (req, res, next) => {
-  const bucket = shareRateLimiter.check(clientKey(req));
-  if (!bucket.allowed) {
-    const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - Date.now()) / 1000));
-    res.setHeader("Retry-After", String(retryAfter));
-    return res.status(429).json({ error: "Too many share requests. Slow down." });
-  }
-
-  return next();
+app.get("/api/shares", async (_req, res) => {
+  const db = await store.read();
+  return res.json({
+    items: listShares(db),
+  });
 });
 
 app.post("/api/shares/albums/:albumId", async (req, res) => {
@@ -291,13 +419,23 @@ app.post("/api/shares/albums/:albumId", async (req, res) => {
       expiresAt: output.share.expiresAt,
       requiresPassword: Boolean(output.share.passwordHash),
       shareUrl: `/api/shares/${output.share.token}`,
+      publicPageUrl: `/app/share.html?token=${output.share.token}`,
     });
   } catch (error) {
     return res.status(400).json({ error: error.message });
   }
 });
 
-app.get("/api/shares/:token", async (req, res) => {
+app.delete("/api/shares/:shareId", async (req, res) => {
+  try {
+    const result = await store.update((db) => revokeShare(db, req.params.shareId));
+    return res.json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/api/shares/:token", withShareRateLimit, async (req, res) => {
   const db = await store.read();
   const share = getShareByToken(db, req.params.token);
   const access = validateShareAccess(share, sharePassword(req));
@@ -324,7 +462,7 @@ app.get("/api/shares/:token", async (req, res) => {
   });
 });
 
-app.get("/api/shares/:token/assets/:assetId/file", async (req, res) => {
+app.get("/api/shares/:token/assets/:assetId/file", withShareRateLimit, async (req, res) => {
   const db = await store.read();
   const share = getShareByToken(db, req.params.token);
   const access = validateShareAccess(share, sharePassword(req));

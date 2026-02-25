@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alpha Shared Album</title>
+    <style>
+      body { margin: 0; font-family: Inter, Segoe UI, Arial, sans-serif; background: #0b1220; color: #e6edff; }
+      .wrap { max-width: 980px; margin: 0 auto; padding: 20px; }
+      h1 { margin: 0 0 8px; }
+      .muted { color: #a7b4d6; }
+      .card { border: 1px solid #2a375f; border-radius: 12px; background: #111a2f; padding: 14px; margin-bottom: 12px; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+      input, button { border: 1px solid #2a375f; border-radius: 8px; padding: 9px 10px; background: #0f172a; color: #e6edff; }
+      button { cursor: pointer; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+      .item { border: 1px solid #2a375f; border-radius: 10px; overflow: hidden; background: #0f172a; }
+      .thumb { background: #020617; height: 160px; display: grid; place-items: center; }
+      .thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; }
+      .body { padding: 8px; font-size: 0.9rem; }
+      a { color: #7aa2ff; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1 id="title">Shared Album</h1>
+      <p id="subtitle" class="muted">Loading…</p>
+
+      <div class="card" id="pwCard" style="display:none;">
+        <div class="row">
+          <input id="password" type="password" placeholder="Share password" />
+          <button id="unlockBtn">Unlock</button>
+        </div>
+        <div id="pwMsg" class="muted"></div>
+      </div>
+
+      <div id="content" class="grid"></div>
+    </div>
+
+    <script>
+      const token = new URLSearchParams(location.search).get('token');
+      let password = '';
+
+      function esc(s) { return String(s ?? '').replace(/[&<>\"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
+
+      async function fetchShare() {
+        if (!token) {
+          document.getElementById('subtitle').textContent = 'Missing token in URL.';
+          return;
+        }
+
+        const qs = password ? `?password=${encodeURIComponent(password)}` : '';
+        const res = await fetch(`/api/shares/${token}${qs}`);
+        const body = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            document.getElementById('pwCard').style.display = 'block';
+            document.getElementById('pwMsg').textContent = 'Password required.';
+            document.getElementById('subtitle').textContent = 'This shared album is protected.';
+            return;
+          }
+          document.getElementById('subtitle').textContent = body.error || 'Unable to open share.';
+          return;
+        }
+
+        document.getElementById('pwCard').style.display = body.share.requiresPassword ? 'block' : 'none';
+        document.getElementById('title').textContent = body.album.name;
+        document.getElementById('subtitle').textContent = `${body.assets.length} items`;
+
+        document.getElementById('content').innerHTML = body.assets.map((asset) => {
+          if (!asset.url) {
+            return `<div class="item"><div class="thumb"><span class="muted">Derivative unavailable</span></div><div class="body">${esc(asset.type)} · ${esc(asset.takenAt || asset.importedAt || '')}</div></div>`;
+          }
+
+          const fileUrl = `${asset.url}${password ? `?password=${encodeURIComponent(password)}` : ''}`;
+          const media = asset.type === 'video'
+            ? `<video controls preload="metadata" src="${fileUrl}"></video>`
+            : `<img src="${fileUrl}" alt="shared media" />`;
+
+          return `<div class="item"><div class="thumb">${media}</div><div class="body">${esc(asset.type)} · ${esc(asset.takenAt || asset.importedAt || '')}</div></div>`;
+        }).join('');
+      }
+
+      document.getElementById('unlockBtn').onclick = async () => {
+        password = document.getElementById('password').value;
+        await fetchShare();
+      };
+
+      fetchShare();
+    </script>
+  </body>
+</html>

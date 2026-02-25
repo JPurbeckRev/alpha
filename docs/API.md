@@ -1,36 +1,27 @@
-# Alpha API (Sprint 3)
+# Alpha API (Owner Experience Baseline)
 
 ## Run
 ```bash
 npm install
 npm start
 ```
-Default URL: `http://localhost:8787`
 
-- Sprint Review Site: `http://localhost:8787/uat`
-- UAT Checklist: `http://localhost:8787/docs/UAT.md`
+## Site Entry Points
+- Owner Site: `http://localhost:8787/app`
+- Legacy alias: `http://localhost:8787/uat`
+- Shared album page: `http://localhost:8787/app/share.html?token=<token>`
+- Docs: `http://localhost:8787/docs/`
 
 ## Health
 ### `GET /api/health`
-Returns service status + counts (batches/imports/assets/albums/derivatives/shares).
+Returns service and counts (batches/imports/assets/albums/derivatives/shares).
 
 ## Staging & Import
 ### `POST /api/staging/upload`
-Multipart form-data:
-- field: `files` (multiple)
-
-Returns:
-- `batchId`
-- `status`
-- `summary`
-  - `totalFiles`
-  - `duplicateCount`
-  - `formats`
-  - `shotsDetected`
-  - `missingTakenAtCount`
+Multipart form-data (`files` field).
 
 ### `GET /api/staging/:batchId`
-Returns batch status and summary.
+Staging batch summary/status.
 
 ### `POST /api/imports/:batchId/execute`
 Body:
@@ -46,100 +37,89 @@ Rules:
 - `day_imported`
 - `new_name` (requires `albumName`)
 
-Import now attempts share-derivative generation per logical asset.
+Import log counts include derivative readiness.
 
 ### `GET /api/imports/:importId/log`
-Returns import log + counts.
+Import log payload.
 
-## Library Read APIs
+## Library
 ### `GET /api/library/summary`
-Top-level totals (assets/sourceFiles/derivatives/albums/shares/imports/stagedBatches).
+Totals for assets/sourceFiles/derivatives/albums/shares/imports.
 
 ### `GET /api/library/assets`
-Query params:
-- `page` (default 1)
-- `pageSize` (default 50, max 200)
+Paginated asset list with owner-safe source-file download URLs and preview URL.
+
+Query:
+- `page`, `pageSize`
 - `type=photo|video`
-- `search=<filename substring>`
+- `search`
 - `rawOnly=true|false`
 - `jpegOnly=true|false`
-- `cameraModel=<substring>`
+- `cameraModel`
+
+### `GET /api/library/assets/:assetId`
+Single hydrated asset payload.
 
 ### `GET /api/library/timeline`
-Query params:
+Day-grouped timeline with preview URLs.
+
+Query:
 - `groupBy=day_taken|day_imported`
 - `type=photo|video`
-- `page`
-- `pageSize`
+- `page`, `pageSize`
 
-## Album APIs (CRUD)
+## Owner Media Endpoints
+### `GET /api/owner/assets/:assetId/preview`
+Returns best-available preview for owner experience:
+- preferred: ready derivative
+- fallback: JPEG/MP4 source when available
+
+### `GET /api/owner/source-files/:sourceFileId/download`
+Downloads original source file (owner privilege path).
+
+## Albums
 ### `GET /api/albums`
-Paginated album list with `assetCount`.
+List albums with asset counts.
 
 ### `POST /api/albums`
-Body:
-```json
-{ "name": "Yosemite 2026" }
-```
+Create album.
 
 ### `GET /api/albums/:albumId`
-Album + paginated assets.
+Album details + paginated hydrated assets.
 
 ### `PATCH /api/albums/:albumId`
-Patch body fields:
-- `name`
-- `sortPolicy`
-- `sharingStatus`
-- `coverAssetId`
+Update album metadata.
 
 ### `DELETE /api/albums/:albumId?deleteAssets=false`
-Deletes album only by default.
+Delete album.
 
 ### `POST /api/albums/:albumId/assets`
-Body:
-```json
-{ "assetIds": ["..."] }
-```
+Add assets.
 
 ### `DELETE /api/albums/:albumId/assets/:assetId`
-Removes one asset from album.
+Remove asset.
 
-## Sharing APIs (Sprint 3)
-> Basic rate limiting is applied on `/api/shares/*` endpoints.
+## Shares
+### `GET /api/shares`
+Owner list of active shares.
 
 ### `POST /api/shares/albums/:albumId`
-Create a tokenized album share.
+Create tokenized share (optional password + expiry).
 
 Body:
 ```json
 {
   "password": "optional",
-  "expiresAt": "optional ISO timestamp"
+  "expiresAt": "optional ISO"
 }
 ```
 
-Response includes:
-- `token`
-- `shareUrl`
-- `requiresPassword`
-- `expiresAt`
+### `DELETE /api/shares/:shareId`
+Revoke share.
 
 ### `GET /api/shares/:token`
-Read shared album payload.
-
-Password-protected shares:
-- pass `?password=...`
-- or header `x-share-password`
-
-Returns album metadata and asset URLs that point to derivative files only.
+Read shared payload (public, rate-limited).
+- password via `?password=` or `x-share-password`
 
 ### `GET /api/shares/:token/assets/:assetId/file`
-Streams share derivative file (never original).
-
-If derivative does not exist yet, returns `415`.
-
-## Storage Notes
-- Originals: `storage/originals`
-- Derivatives: `storage/derivatives`
-- Staging: `storage/staging`
-- Metadata DB: `storage/db.json`
+Streams derivative file only (public, rate-limited).

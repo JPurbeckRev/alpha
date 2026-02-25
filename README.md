@@ -6,12 +6,20 @@ Project workspace for Alpha.
 - `SPRINT_TEAM_PERSONAS.md` — domain personas and guiding principles
 - `PRD.md` — product requirements and round-specific scope
 - `MEMORY.md` — durable project thoughts/decisions
-- `HANDOFF.md` — authoritative current state + timestamped handoff progression log (updated every dev cycle)
-- `TEAM_VOICES.md` — per-round discipline voices (objections/advice/guidance/admonishments/frustration)
-- `RISK_ESCALATION.md` — pre-failure escalation triggers and reporting format
+- `HANDOFF.md` — authoritative current state + timestamped handoff progression log
+- `TEAM_VOICES.md` — per-round discipline voices
+- `RISK_ESCALATION.md` — pre-failure escalation protocol
 
-## Build Surface (current)
+## Design Gate Artifacts
+- `docs/DESIGN_ASSESSMENT.md`
+- `docs/UX_FLOW_MAP.md`
+- `docs/WIREFRAME_SPEC.md`
+- `docs/DESIGN_GATE_CHECKLIST.md`
+
+## Build Surface
 - Backend service: `src/server.js`
+- Owner site: `app/index.html`
+- Shared page: `app/share.html`
 - API docs: `docs/API.md`
 - Sprint reports: `SPRINTS/`
 
@@ -22,12 +30,13 @@ npm start
 npm test
 ```
 
-## UAT
+## Sprint Evaluation Site
 ```bash
 npm run uat:seed
 npm run uat:start
-# in another terminal
+# optional smoke verification
 npm run uat:smoke
 ```
-- Sprint Review Site: `http://localhost:8787/uat`
-- UAT Checklist: `http://localhost:8787/docs/UAT.md`
+- Owner site: `http://localhost:8787/app`
+- Alias: `http://localhost:8787/uat`
+- Evaluation checklist: `http://localhost:8787/docs/UAT.md`
