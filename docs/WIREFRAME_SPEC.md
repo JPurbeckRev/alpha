@@ -2,16 +2,50 @@
 
 Purpose: provide implementation-ready wireframe guidance for owner site experience.
 
-## Screen 1 — Owner Home
+## Screen 1 — Owner Home (Primary Experience Launchpad)
 
-### Zones
-1. Top nav: Home / Import / Library / Albums / Sharing
-2. Health/status badges (assets, albums, shares, imports)
-3. Quick links to design and sprint docs
+### Intent
+Home is not an admin dashboard. It is the fastest path through the core owner journey:
+**Ingest quickly → Relive naturally → Share confidently**.
+
+### Zones (priority order)
+1. **Primary Hero: Import CTA**
+   - Main action: "Import Photos/Videos"
+   - Supporting text: upload a batch, choose album behavior, confirm import
+   - Secondary action: "Resume Last Import" (shown when applicable)
+2. **Continue Where You Left Off**
+   - Last import summary (time, file count, albums created, errors if any)
+   - Quick actions: Open Import Result / Open Created Albums / View Queue
+3. **Recent Stories (Albums)**
+   - 3–6 recent albums with cover, title, asset count, date span
+   - Per-card actions: Open / Share / Edit
+4. **Relive by Day (Timeline Preview)**
+   - Day cards grouped by Day Taken with hero thumbnail + count
+   - CTA: Open Library Timeline
+5. **Sharing Quick Actions**
+   - Create share link inline (album picker + optional password + optional expiry)
+   - Active shares mini-list with revoke control
+6. **Conversion & Processing Health (Compact Utility Panel)**
+   - queued/running/failed counts
+   - actions: View Jobs / Retry Failed
+   - intentionally compact and secondary in visual hierarchy
+7. **New User Empty State**
+   - If no assets/imports: guided first-run module with single CTA "Import Your First Trip"
+
+### Copy/Label Guidance
+- Prefer memory-led language (trip, day, moments, story) over implementation-led terms (batch ID, payload).
+- Keep technical terms visible only in secondary/advanced surfaces.
 
 ### Acceptance
-- Status visible in <2 seconds
-- Navigation obvious and persistent
+- Primary import CTA is visible without scroll on standard laptop viewport.
+- User can reach one of these outcomes in <=2 clicks from Home:
+  1) start import,
+  2) open latest album/story,
+  3) create/revoke share,
+  4) inspect conversion failures.
+- Home communicates current progress without requiring API/log literacy.
+- Conversion/job controls are present but not dominant over memory/story browsing.
+- Empty state clearly instructs first action and expected outcome.
 
 ---
 
