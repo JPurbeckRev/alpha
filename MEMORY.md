@@ -11,6 +11,7 @@ This file stores durable team/project memory: decisions, principles, constraints
 - Execute independently by default; escalate before likely failure.
 - HANDOFF.md must be updated every dev cycle with clear current state + next step.
 - Every completed sprint should expose a clear UAT path for PM evaluation.
+- Sharing must serve derivatives by default; originals remain private unless explicitly authorized.
 - PRD is intentionally resettable each dev round.
 
 ## Log
@@ -23,3 +24,6 @@ This file stores durable team/project memory: decisions, principles, constraints
 - 2026-02-24 22:26 PST — Added RISK_ESCALATION.md with explicit pre-failure triggers and escalation format.
 - 2026-02-24 22:33 PST — Executed Sprint 2: metadata extraction, album CRUD + library read APIs, and UAT console/checklist delivered.
 - 2026-02-24 22:33 PST — Updated PRD completion estimate to 44% after Sprint 2.
+- 2026-02-24 22:44 PST — Executed Sprint 3: tokenized sharing + password/expiry + derivative-only delivery + share rate limiting.
+- 2026-02-24 22:44 PST — Published stronger UAT path (console + checklist + smoke script) for PM evaluation.
+- 2026-02-24 22:44 PST — Updated PRD completion estimate to 53% after Sprint 3.

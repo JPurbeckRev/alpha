@@ -27,12 +27,14 @@ test("stage + import flow creates assets and import log", async () => {
     tempUploads: path.join(root, "tmp"),
     stagingRoot: path.join(root, "staging"),
     originalsRoot: path.join(root, "originals"),
+    derivativesRoot: path.join(root, "derivatives"),
     dbPath: path.join(root, "db.json"),
   };
 
   await ensureDir(paths.tempUploads);
   await ensureDir(paths.stagingRoot);
   await ensureDir(paths.originalsRoot);
+  await ensureDir(paths.derivativesRoot);
 
   const store = new JsonStore(paths.dbPath);
   await store.init();
@@ -65,8 +67,10 @@ test("stage + import flow creates assets and import log", async () => {
   assert.equal(importLog.counts.totalFilesInBatch, 3);
   assert.equal(importLog.counts.logicalAssetsCreated, 2);
   assert.equal(importLog.counts.albumsCreated, 1);
+  assert.equal(importLog.counts.derivativesReady, 2);
 
   const db = await store.read();
   assert.equal(db.assets.length, 2);
   assert.equal(db.sourceFiles.length, 3);
+  assert.equal(db.derivatives.length, 2);
 });

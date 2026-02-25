@@ -6,12 +6,26 @@ function defaultDb() {
   return {
     assets: [],
     sourceFiles: [],
+    derivatives: [],
     batches: [],
     imports: [],
     albums: [],
     albumAssets: [],
     shares: [],
   };
+}
+
+function normalizeDb(db) {
+  const normalized = { ...defaultDb(), ...(db ?? {}) };
+  normalized.assets = Array.isArray(normalized.assets) ? normalized.assets : [];
+  normalized.sourceFiles = Array.isArray(normalized.sourceFiles) ? normalized.sourceFiles : [];
+  normalized.derivatives = Array.isArray(normalized.derivatives) ? normalized.derivatives : [];
+  normalized.batches = Array.isArray(normalized.batches) ? normalized.batches : [];
+  normalized.imports = Array.isArray(normalized.imports) ? normalized.imports : [];
+  normalized.albums = Array.isArray(normalized.albums) ? normalized.albums : [];
+  normalized.albumAssets = Array.isArray(normalized.albumAssets) ? normalized.albumAssets : [];
+  normalized.shares = Array.isArray(normalized.shares) ? normalized.shares : [];
+  return normalized;
 }
 
 export class JsonStore {
@@ -33,7 +47,7 @@ export class JsonStore {
 
   async read() {
     const raw = await fs.readFile(this.#dbPath, "utf8");
-    return JSON.parse(raw);
+    return normalizeDb(JSON.parse(raw));
   }
 
   async write(db) {

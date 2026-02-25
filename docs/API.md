@@ -1,4 +1,4 @@
-# Alpha API (Sprint 2)
+# Alpha API (Sprint 3)
 
 ## Run
 ```bash
@@ -7,11 +7,12 @@ npm start
 ```
 Default URL: `http://localhost:8787`
 
-UAT Console: `http://localhost:8787/uat`
+- UAT Console: `http://localhost:8787/uat`
+- UAT Checklist: `http://localhost:8787/docs/UAT.md`
 
 ## Health
 ### `GET /api/health`
-Returns service status + object counts.
+Returns service status + counts (batches/imports/assets/albums/derivatives/shares).
 
 ## Staging & Import
 ### `POST /api/staging/upload`
@@ -21,7 +22,7 @@ Multipart form-data:
 Returns:
 - `batchId`
 - `status`
-- `summary`:
+- `summary`
   - `totalFiles`
   - `duplicateCount`
   - `formats`
@@ -29,7 +30,7 @@ Returns:
   - `missingTakenAtCount`
 
 ### `GET /api/staging/:batchId`
-Returns batch summary/status.
+Returns batch status and summary.
 
 ### `POST /api/imports/:batchId/execute`
 Body:
@@ -45,12 +46,14 @@ Rules:
 - `day_imported`
 - `new_name` (requires `albumName`)
 
+Import now attempts share-derivative generation per logical asset.
+
 ### `GET /api/imports/:importId/log`
 Returns import log + counts.
 
 ## Library Read APIs
 ### `GET /api/library/summary`
-Object totals for high-level status.
+Top-level totals (assets/sourceFiles/derivatives/albums/shares/imports/stagedBatches).
 
 ### `GET /api/library/assets`
 Query params:
@@ -71,7 +74,7 @@ Query params:
 
 ## Album APIs (CRUD)
 ### `GET /api/albums`
-Paginated list with `assetCount`.
+Paginated album list with `assetCount`.
 
 ### `POST /api/albums`
 Body:
@@ -80,10 +83,10 @@ Body:
 ```
 
 ### `GET /api/albums/:albumId`
-Returns album + paginated assets.
+Album + paginated assets.
 
 ### `PATCH /api/albums/:albumId`
-Body supports:
+Patch body fields:
 - `name`
 - `sortPolicy`
 - `sharingStatus`
@@ -99,10 +102,44 @@ Body:
 ```
 
 ### `DELETE /api/albums/:albumId/assets/:assetId`
-Removes single asset from album.
+Removes one asset from album.
+
+## Sharing APIs (Sprint 3)
+> Basic rate limiting is applied on `/api/shares/*` endpoints.
+
+### `POST /api/shares/albums/:albumId`
+Create a tokenized album share.
+
+Body:
+```json
+{
+  "password": "optional",
+  "expiresAt": "optional ISO timestamp"
+}
+```
+
+Response includes:
+- `token`
+- `shareUrl`
+- `requiresPassword`
+- `expiresAt`
+
+### `GET /api/shares/:token`
+Read shared album payload.
+
+Password-protected shares:
+- pass `?password=...`
+- or header `x-share-password`
+
+Returns album metadata and asset URLs that point to derivative files only.
+
+### `GET /api/shares/:token/assets/:assetId/file`
+Streams share derivative file (never original).
+
+If derivative does not exist yet, returns `415`.
 
 ## Storage Notes
-- Storage root: `storage/`
 - Originals: `storage/originals`
+- Derivatives: `storage/derivatives`
 - Staging: `storage/staging`
 - Metadata DB: `storage/db.json`

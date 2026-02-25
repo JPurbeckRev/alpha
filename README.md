@@ -26,6 +26,8 @@ npm test
 ```bash
 npm run uat:seed
 npm run uat:start
+# in another terminal
+npm run uat:smoke
 ```
 - UAT Console: `http://localhost:8787/uat`
 - UAT Checklist: `http://localhost:8787/docs/UAT.md`

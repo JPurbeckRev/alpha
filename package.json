@@ -8,7 +8,8 @@
     "start": "node src/server.js",
     "test": "node --test",
     "uat:start": "node src/server.js",
-    "uat:seed": "node scripts/generate-uat-samples.js"
+    "uat:seed": "node scripts/generate-uat-samples.js",
+    "uat:smoke": "node scripts/smoke-uat.mjs"
   },
   "keywords": [
     "photo",

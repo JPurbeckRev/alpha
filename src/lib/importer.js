@@ -13,6 +13,7 @@ import {
 import { ensureDir, pathExists, safeMoveFile } from "./fs-utils.js";
 import { sha256File } from "./hash.js";
 import { extractMetadata } from "./metadata.js";
+import { generateDerivativesForAssets } from "./derivatives.js";
 
 function sanitizeFileName(name) {
   return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
@@ -282,6 +283,13 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
       albumAssets = grouped.albumAssets;
     }
 
+    await ensureDir(paths.derivativesRoot);
+    const derivativeOutput = await generateDerivativesForAssets({
+      assets,
+      sourceFiles: importedSourceFiles,
+      derivativesRoot: paths.derivativesRoot,
+    });
+
     const importLog = {
       id: importId,
       batchId,
@@ -294,6 +302,8 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
         sourceFilesImported: importedSourceFiles.length,
         logicalAssetsCreated: assets.length,
         albumsCreated: albums.length,
+        derivativesReady: derivativeOutput.counts.ready,
+        derivativesUnavailable: derivativeOutput.counts.unavailable,
         failedFiles: 0,
       },
       createdAlbumIds: albums.map((a) => a.id),
@@ -302,6 +312,7 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
 
     db.sourceFiles.push(...importedSourceFiles);
     db.assets.push(...assets);
+    db.derivatives.push(...derivativeOutput.derivatives);
     db.albums.push(...albums);
     db.albumAssets.push(...albumAssets);
     db.imports.push(importLog);

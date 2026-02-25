@@ -9,6 +9,7 @@ export const paths = {
   tempUploads: path.join(storageRoot, "tmp_uploads"),
   stagingRoot: path.join(storageRoot, "staging"),
   originalsRoot: path.join(storageRoot, "originals"),
+  derivativesRoot: path.join(storageRoot, "derivatives"),
   dbPath: path.join(storageRoot, "db.json"),
 };
 

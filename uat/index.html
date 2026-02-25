@@ -81,6 +81,22 @@
     </section>
 
     <section>
+      <h2>5) Sharing (Sprint 3)</h2>
+      <div class="row">
+        <input id="shareAlbumId" placeholder="Album ID to share" />
+        <input id="sharePassword" placeholder="Optional share password" />
+        <input id="shareExpiresAt" placeholder="Optional expiry ISO (e.g. 2026-12-31T23:59:59Z)" />
+        <button id="createShareBtn">Create Share Link</button>
+      </div>
+      <div class="row">
+        <input id="shareToken" placeholder="Share token" />
+        <input id="shareAccessPassword" placeholder="Share password (if required)" />
+        <button id="openShareBtn">Open Share</button>
+      </div>
+      <pre id="shareOut">(results)</pre>
+    </section>
+
+    <section>
       <h2>UAT Guide</h2>
       <p>Detailed checklist: <a href="/docs/UAT.md" target="_blank">/docs/UAT.md</a></p>
     </section>
@@ -184,6 +200,33 @@
           const id = document.getElementById("deleteAlbumId").value;
           print("albumsOut", await api(`/api/albums/${id}`, { method: "DELETE" }));
         } catch (e) { print("albumsOut", { error: String(e) }); }
+      };
+
+      document.getElementById("createShareBtn").onclick = async () => {
+        try {
+          const albumId = document.getElementById("shareAlbumId").value;
+          const password = document.getElementById("sharePassword").value || null;
+          const expiresAt = document.getElementById("shareExpiresAt").value || null;
+          const body = await api(`/api/shares/albums/${albumId}`, {
+            method: "POST",
+            body: JSON.stringify({ password, expiresAt }),
+          });
+          document.getElementById("shareToken").value = body.token;
+          print("shareOut", body);
+        } catch (e) {
+          print("shareOut", { error: String(e) });
+        }
+      };
+
+      document.getElementById("openShareBtn").onclick = async () => {
+        try {
+          const token = document.getElementById("shareToken").value;
+          const password = document.getElementById("shareAccessPassword").value;
+          const query = password ? `?password=${encodeURIComponent(password)}` : "";
+          print("shareOut", await api(`/api/shares/${token}${query}`));
+        } catch (e) {
+          print("shareOut", { error: String(e) });
+        }
       };
     </script>
   </body>

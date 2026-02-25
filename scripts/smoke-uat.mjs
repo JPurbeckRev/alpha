@@ -45,15 +45,27 @@ async function main() {
   const albums = await json(`${base}/api/albums`);
   const assets = await json(`${base}/api/library/assets?page=1&pageSize=10`);
 
+  const newestAlbumId = imp.createdAlbumIds?.[0];
+  const share = await json(`${base}/api/shares/albums/${newestAlbumId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password: "smoke-pass" }),
+  });
+
+  const shared = await json(`${base}/api/shares/${share.token}?password=smoke-pass`);
+
   console.log(
     JSON.stringify(
       {
         health: health.ok,
         batchId: upload.batchId,
         importedAssets: imp.counts.logicalAssetsCreated,
+        derivativesReady: imp.counts.derivativesReady,
         timelineGroups: timeline.pagination.total,
         albumCount: albums.pagination.total,
         assetCount: assets.pagination.total,
+        shareTokenPrefix: share.token.slice(0, 8),
+        sharedAssetCount: shared.assets.length,
       },
       null,
       2,

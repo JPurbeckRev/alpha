@@ -18,11 +18,23 @@ import {
   removeAssetFromAlbum,
   updateAlbum,
 } from "./lib/albums.js";
+import { latestReadyShareDerivative } from "./lib/derivatives.js";
+import { createMemoryRateLimiter } from "./lib/rate-limit.js";
+import { createAlbumShare, getShareByToken, listShareAssets, validateShareAccess } from "./lib/shares.js";
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
 
 const store = new JsonStore(paths.dbPath);
+const shareRateLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 120 });
+
+function clientKey(req) {
+  return req.ip || req.headers["x-forwarded-for"] || "unknown";
+}
+
+function sharePassword(req) {
+  return req.query.password ?? req.headers["x-share-password"] ?? null;
+}
 
 function asBoolean(value, fallback = false) {
   if (value === undefined) return fallback;
@@ -36,6 +48,7 @@ async function bootstrap() {
   await ensureDir(paths.tempUploads);
   await ensureDir(paths.stagingRoot);
   await ensureDir(paths.originalsRoot);
+  await ensureDir(paths.derivativesRoot);
   await store.init();
 }
 
@@ -56,6 +69,8 @@ app.get("/api/health", async (_req, res) => {
       imports: db.imports.length,
       assets: db.assets.length,
       albums: db.albums.length,
+      derivatives: db.derivatives.length,
+      shares: db.shares.length,
     },
   });
 });
@@ -143,7 +158,9 @@ app.get("/api/library/summary", async (_req, res) => {
   return res.json({
     assets: db.assets.length,
     sourceFiles: db.sourceFiles.length,
+    derivatives: db.derivatives.length,
     albums: db.albums.length,
+    shares: db.shares.length,
     imports: db.imports.length,
     stagedBatches: db.batches.filter((b) => b.status === "staged").length,
   });
@@ -244,6 +261,84 @@ app.delete("/api/albums/:albumId/assets/:assetId", async (req, res) => {
   } catch (error) {
     return res.status(400).json({ error: error.message });
   }
+});
+
+app.use("/api/shares", (req, res, next) => {
+  const bucket = shareRateLimiter.check(clientKey(req));
+  if (!bucket.allowed) {
+    const retryAfter = Math.max(1, Math.ceil((bucket.resetAt - Date.now()) / 1000));
+    res.setHeader("Retry-After", String(retryAfter));
+    return res.status(429).json({ error: "Too many share requests. Slow down." });
+  }
+
+  return next();
+});
+
+app.post("/api/shares/albums/:albumId", async (req, res) => {
+  try {
+    const payload = req.body ?? {};
+    const output = await store.update((db) =>
+      createAlbumShare(db, req.params.albumId, {
+        password: payload.password ?? null,
+        expiresAt: payload.expiresAt ?? null,
+      }),
+    );
+
+    return res.status(201).json({
+      shareId: output.share.id,
+      token: output.share.token,
+      albumId: output.share.albumId,
+      expiresAt: output.share.expiresAt,
+      requiresPassword: Boolean(output.share.passwordHash),
+      shareUrl: `/api/shares/${output.share.token}`,
+    });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/api/shares/:token", async (req, res) => {
+  const db = await store.read();
+  const share = getShareByToken(db, req.params.token);
+  const access = validateShareAccess(share, sharePassword(req));
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
+  const { album, assets } = listShareAssets(db, share);
+  if (!album) return res.status(404).json({ error: "Album not found" });
+
+  return res.json({
+    album: {
+      id: album.id,
+      name: album.name,
+      sharingStatus: album.sharingStatus,
+    },
+    share: {
+      token: share.token,
+      expiresAt: share.expiresAt,
+      requiresPassword: Boolean(share.passwordHash),
+    },
+    assets: assets.map((asset) => ({
+      ...asset,
+      url: asset.hasShareDerivative ? `/api/shares/${share.token}/assets/${asset.id}/file` : null,
+    })),
+  });
+});
+
+app.get("/api/shares/:token/assets/:assetId/file", async (req, res) => {
+  const db = await store.read();
+  const share = getShareByToken(db, req.params.token);
+  const access = validateShareAccess(share, sharePassword(req));
+  if (!access.ok) return res.status(access.status).json({ error: access.error });
+
+  const assetInAlbum = db.albumAssets.some((aa) => aa.albumId === share.albumId && aa.assetId === req.params.assetId);
+  if (!assetInAlbum) return res.status(404).json({ error: "Asset not found in shared album" });
+
+  const derivative = latestReadyShareDerivative(db, req.params.assetId);
+  if (!derivative) return res.status(415).json({ error: "Share derivative not available for this asset yet" });
+
+  res.setHeader("Content-Type", derivative.mimeType || "application/octet-stream");
+  res.setHeader("Cache-Control", "public, max-age=300");
+  return res.sendFile(derivative.storagePath);
 });
 
 bootstrap()
