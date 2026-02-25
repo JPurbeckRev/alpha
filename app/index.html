@@ -196,7 +196,7 @@
       <div class="header-inner">
         <div>
           <div class="title">Alpha — Owner Site</div>
-          <div class="muted">Max-privilege working experience for import, browse, albums, and sharing.</div>
+          <div class="muted">Import, relive, and share your moments — without admin clutter.</div>
         </div>
         <div id="healthBadge" class="muted">Checking health…</div>
       </div>
@@ -305,17 +305,13 @@
           </div>
           <div>
             <div class="row">
-              <input id="selectedAlbumId" placeholder="Selected album ID" />
+              <select id="selectedAlbumPicker"></select>
               <button id="loadAlbumBtn">Open Album</button>
             </div>
             <div class="row">
               <input id="renameAlbumName" placeholder="Rename selected album" />
               <button id="renameAlbumBtn">Rename</button>
               <button class="danger" id="deleteAlbumBtn">Delete Album</button>
-            </div>
-            <div class="row">
-              <input id="addAssetId" placeholder="Add asset ID to selected album" />
-              <button id="addAssetBtn">Add Asset</button>
             </div>
             <div id="albumAssets" class="cards"></div>
           </div>
@@ -325,7 +321,7 @@
       <section id="tab-sharing" class="hidden">
         <h2>Sharing Studio</h2>
         <div class="row">
-          <input id="shareAlbumId" placeholder="Album ID" />
+          <select id="shareAlbumId"></select>
           <input id="sharePassword" placeholder="Optional password" />
           <input id="shareExpiresAt" placeholder="Optional expiry ISO" />
           <button class="primary" id="createShareBtn">Create Share</button>
@@ -338,7 +334,6 @@
     <script>
       const state = {
         albums: [],
-        selectedAlbumId: null,
       };
 
       function $(id) { return document.getElementById(id); }
@@ -382,9 +377,6 @@
           ? `<video src="${asset.previewUrl}" controls muted preload="metadata"></video>`
           : `<img src="${asset.previewUrl}" alt="asset preview" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
 
-        const downloadLinks = (asset.sourceFiles || []).map((sf) =>
-          `<a href="${sf.downloadUrl}" target="_blank">${esc(sf.originalName)}</a>`).join(" · ");
-
         const actions = includeActions
           ? `<div class="row"><button data-remove="${asset.id}">Remove</button></div>`
           : "";
@@ -395,7 +387,6 @@
             <div class="card-body">
               <div><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown camera")}</span></div>
               <div class="muted">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
-              <div style="margin-top:6px; font-size:0.82rem;">${downloadLinks || '<span class="muted">No source links</span>'}</div>
               ${actions}
             </div>
           </div>
@@ -452,7 +443,7 @@
 
           document.querySelectorAll('[data-home-open-album]').forEach((btn) => {
             btn.onclick = () => {
-              $('selectedAlbumId').value = btn.dataset.homeOpenAlbum;
+              $('selectedAlbumPicker').value = btn.dataset.homeOpenAlbum;
               setTab('albums');
               loadAlbum();
             };
@@ -495,7 +486,7 @@
         $('importOpenCreatedAlbumsBtn').onclick = async () => {
           await refreshAlbums();
           if (importLog.createdAlbumIds?.length) {
-            $('selectedAlbumId').value = importLog.createdAlbumIds[0];
+            $('selectedAlbumPicker').value = importLog.createdAlbumIds[0];
             setTab('albums');
             await loadAlbum();
           } else {
@@ -570,17 +561,21 @@
           $('albumList').innerHTML = state.albums.map((a) => `
             <div class="list-item">
               <div><strong>${esc(a.name)}</strong></div>
-              <div class="muted">${a.assetCount} assets · ${esc(a.id)}</div>
+              <div class="muted">${a.assetCount} assets</div>
               <div class="row">
                 <button data-select-album="${a.id}">Open</button>
-                <button data-share-album="${a.id}">Use in Sharing</button>
+                <button data-share-album="${a.id}">Share</button>
               </div>
             </div>
           `).join('') || '<div class="muted">No albums yet.</div>';
 
+          const options = ['<option value="">Select album…</option>', ...state.albums.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`)].join('');
+          $('selectedAlbumPicker').innerHTML = options;
+          $('shareAlbumId').innerHTML = options;
+
           document.querySelectorAll('[data-select-album]').forEach((btn) => {
             btn.onclick = () => {
-              $('selectedAlbumId').value = btn.dataset.selectAlbum;
+              $('selectedAlbumPicker').value = btn.dataset.selectAlbum;
               loadAlbum();
               setTab('albums');
             };
@@ -598,9 +593,8 @@
       }
 
       async function loadAlbum() {
-        const albumId = $('selectedAlbumId').value.trim();
+        const albumId = $('selectedAlbumPicker').value.trim();
         if (!albumId) return;
-        state.selectedAlbumId = albumId;
 
         try {
           const album = await api(`/api/albums/${albumId}`);
@@ -641,7 +635,7 @@
           $('shareList').innerHTML = payload.items.map((s) => `
             <div class="list-item">
               <div><strong>${esc(s.albumName)}</strong></div>
-              <div class="muted">${esc(s.id)} · token ${esc(s.token.slice(0, 10))}… ${s.requiresPassword ? '· password' : ''} ${s.isExpired ? '· expired' : ''}</div>
+              <div class="muted">${s.requiresPassword ? 'Password protected' : 'No password'} ${s.isExpired ? '· Expired' : '· Active'}</div>
               <div class="row">
                 <a href="${s.publicPageUrl}" target="_blank">Open Share Page</a>
                 <button data-copy-share="${s.publicPageUrl}">Copy Link</button>
@@ -714,27 +708,19 @@
       };
       $('loadAlbumBtn').onclick = loadAlbum;
       $('renameAlbumBtn').onclick = async () => {
-        const id = $('selectedAlbumId').value.trim();
+        const id = $('selectedAlbumPicker').value.trim();
         if (!id) return;
         await api(`/api/albums/${id}`, { method: 'PATCH', body: JSON.stringify({ name: $('renameAlbumName').value }) });
         await Promise.all([loadAlbum(), refreshAlbums()]);
       };
       $('deleteAlbumBtn').onclick = async () => {
-        const id = $('selectedAlbumId').value.trim();
+        const id = $('selectedAlbumPicker').value.trim();
         if (!id) return;
         if (!confirm('Delete selected album?')) return;
         await api(`/api/albums/${id}`, { method: 'DELETE' });
-        $('selectedAlbumId').value = '';
+        $('selectedAlbumPicker').value = '';
         $('albumAssets').innerHTML = '';
         await refreshAlbums();
-      };
-      $('addAssetBtn').onclick = async () => {
-        const id = $('selectedAlbumId').value.trim();
-        const assetId = $('addAssetId').value.trim();
-        if (!id || !assetId) return;
-        await api(`/api/albums/${id}/assets`, { method: 'POST', body: JSON.stringify({ assetIds: [assetId] }) });
-        $('addAssetId').value = '';
-        await loadAlbum();
       };
       $('createShareBtn').onclick = createShare;
       $('refreshJobsBtn').onclick = refreshJobs;
