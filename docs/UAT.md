@@ -1,6 +1,6 @@
-# Sprint Evaluation Guide
+# Sprint Evaluation Guide (Sprint 5)
 
-This guide is for evaluating each sprint through the **actual owner site experience**.
+Evaluate each sprint through the owner site experience.
 
 ## Start
 ```bash
@@ -17,7 +17,8 @@ Open:
 ## Evaluation Flow
 
 ### 1) Home snapshot
-- Confirm health badge and project counters load.
+- Confirm health badge and counters load.
+- Confirm conversion job panel loads.
 
 ### 2) Import flow
 - Import sample media with each album rule:
@@ -27,35 +28,32 @@ Open:
 
 Expected:
 - import result appears
-- albums/assets counts increase
-- derivative readiness appears in import log
+- counts increase
+- import log includes derivative/job metrics
 
 ### 3) Library flow
 - Browse timeline by day taken/day imported.
 - Filter by type and search.
 - Validate previews and owner download links.
 
-Expected:
-- media cards render
-- fallback behavior appears when preview unavailable
-
 ### 4) Album curation flow
-- Create an album.
+- Create album.
 - Open album and add/remove assets.
-- Rename and delete album.
-
-Expected:
-- operations reflect immediately in album list/detail.
+- Rename/delete album.
 
 ### 5) Sharing flow
 - Create share (with and without password).
-- Open public share page.
-- Validate revoke flow from owner site.
+- Open share page.
+- Revoke from owner site.
+
+### 6) Derivative-job flow (Sprint 5)
+- Open Home tab.
+- Click **Refresh Conversion Jobs**.
+- Click **Run Conversion Jobs**.
 
 Expected:
-- share page loads derivative-only media.
-- password-protected share blocks unauthorized access.
-- revoked share no longer accessible.
+- job summary updates
+- failed/requeued/completed status is visible
 
 ## Quick smoke
 With server running:
@@ -63,8 +61,10 @@ With server running:
 npm run uat:smoke
 ```
 
-Expected: JSON output including health/import/share checks.
+Expected JSON includes:
+- health/import/share checks
+- derivative job stats (`jobsQueuedBefore`, `jobsRunScanned`, `jobsCompletedAfter`)
 
 ## Known limits
-- ARW and MTS full conversion pipeline is still pending.
-- Derivative support currently favors JPEG/MP4 inputs.
+- ARW/MTS conversion depends on ffmpeg availability on host.
+- Without ffmpeg, queued conversion jobs may requeue/fail with tool errors.

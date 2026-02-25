@@ -40,3 +40,4 @@ npm run uat:smoke
 - Owner site: `http://localhost:8787/app`
 - Alias: `http://localhost:8787/uat`
 - Evaluation checklist: `http://localhost:8787/docs/UAT.md`
+- Includes derivative conversion-job controls on Home tab

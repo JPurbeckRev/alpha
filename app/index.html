@@ -190,6 +190,11 @@
       <section id="tab-home">
         <h2>Project Snapshot</h2>
         <div class="row" id="statsRow"></div>
+        <div class="row">
+          <button id="refreshJobsBtn">Refresh Conversion Jobs</button>
+          <button class="primary" id="runJobsBtn">Run Conversion Jobs</button>
+        </div>
+        <pre id="jobsOut">(derivative conversion job status)</pre>
         <div class="muted">Design gate artifacts: <a href="/docs/DESIGN_ASSESSMENT.md" target="_blank">Design Assessment</a> · <a href="/docs/UAT.md" target="_blank">Sprint Checklist</a></div>
       </section>
 
@@ -335,6 +340,7 @@
             <span class="pill">Shares: ${summary.shares}</span>
             <span class="pill">Imports: ${summary.imports}</span>
             <span class="pill">Derivatives: ${summary.derivatives}</span>
+            <span class="pill">Conversion jobs: ${summary.derivativeJobs}</span>
           `;
         } catch (error) {
           $('healthBadge').textContent = `Service offline: ${error.message}`;
@@ -492,10 +498,34 @@
             btn.onclick = async () => {
               await api(`/api/shares/${btn.dataset.revokeShare}`, { method: 'DELETE' });
               await refreshShares();
+              await refreshStats();
             };
           });
         } catch (error) {
           $('shareList').innerHTML = `<div class="muted">${esc(error.message)}</div>`;
+        }
+      }
+
+      async function refreshJobs() {
+        try {
+          const payload = await api('/api/jobs/derivatives');
+          $('jobsOut').textContent = JSON.stringify(payload, null, 2);
+          await refreshStats();
+        } catch (error) {
+          $('jobsOut').textContent = `Error: ${error.message}`;
+        }
+      }
+
+      async function runJobs() {
+        try {
+          const result = await api('/api/jobs/derivatives/run', {
+            method: 'POST',
+            body: JSON.stringify({ limit: 20, force: true }),
+          });
+          $('jobsOut').textContent = JSON.stringify(result, null, 2);
+          await Promise.all([refreshJobs(), refreshLibrary(), refreshShares()]);
+        } catch (error) {
+          $('jobsOut').textContent = `Error: ${error.message}`;
         }
       }
 
@@ -533,8 +563,10 @@
         await loadAlbum();
       };
       $('createShareBtn').onclick = createShare;
+      $('refreshJobsBtn').onclick = refreshJobs;
+      $('runJobsBtn').onclick = runJobs;
 
-      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares()]);
+      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshJobs()]);
     </script>
   </body>
 </html>

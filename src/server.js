@@ -20,6 +20,7 @@ import {
 } from "./lib/albums.js";
 import { latestReadyShareDerivative } from "./lib/derivatives.js";
 import { createMemoryRateLimiter } from "./lib/rate-limit.js";
+import { listDerivativeJobs, processDerivativeJobs } from "./lib/derivative-jobs.js";
 import {
   createAlbumShare,
   getShareByToken,
@@ -150,6 +151,7 @@ app.get("/api/health", async (_req, res) => {
       assets: db.assets.length,
       albums: db.albums.length,
       derivatives: db.derivatives.length,
+      derivativeJobs: db.derivativeJobs.length,
       shares: db.shares.length,
     },
   });
@@ -239,6 +241,7 @@ app.get("/api/library/summary", async (_req, res) => {
     assets: db.assets.length,
     sourceFiles: db.sourceFiles.length,
     derivatives: db.derivatives.length,
+    derivativeJobs: db.derivativeJobs.length,
     albums: db.albums.length,
     shares: db.shares.length,
     imports: db.imports.length,
@@ -402,6 +405,32 @@ app.post("/api/albums/:albumId/assets", async (req, res) => {
 app.delete("/api/albums/:albumId/assets/:assetId", async (req, res) => {
   try {
     const result = await store.update((db) => removeAssetFromAlbum(db, req.params.albumId, req.params.assetId));
+    return res.json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.get("/api/jobs/derivatives", async (_req, res) => {
+  const db = await store.read();
+  const items = listDerivativeJobs(db);
+  return res.json({
+    items,
+    summary: {
+      total: items.length,
+      queued: items.filter((j) => j.status === "queued").length,
+      processing: items.filter((j) => j.status === "processing").length,
+      completed: items.filter((j) => j.status === "completed").length,
+      failed: items.filter((j) => j.status === "failed").length,
+    },
+  });
+});
+
+app.post("/api/jobs/derivatives/run", async (req, res) => {
+  try {
+    const limit = normalizePageSize(req.body?.limit, 10, 100);
+    const force = asBoolean(req.body?.force, false);
+    const result = await store.update((db) => processDerivativeJobs({ db, paths, limit, force }));
     return res.json(result);
   } catch (error) {
     return res.status(400).json({ error: error.message });

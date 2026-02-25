@@ -44,6 +44,13 @@ async function main() {
   const timeline = await json(`${base}/api/library/timeline?groupBy=day_imported`);
   const albums = await json(`${base}/api/albums`);
   const assets = await json(`${base}/api/library/assets?page=1&pageSize=10`);
+  const jobsBefore = await json(`${base}/api/jobs/derivatives`);
+  const jobsRun = await json(`${base}/api/jobs/derivatives/run`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ limit: 20, force: true }),
+  });
+  const jobsAfter = await json(`${base}/api/jobs/derivatives`);
 
   const newestAlbumId = imp.createdAlbumIds?.[0];
   const share = await json(`${base}/api/shares/albums/${newestAlbumId}`, {
@@ -66,6 +73,9 @@ async function main() {
         assetCount: assets.pagination.total,
         shareTokenPrefix: share.token.slice(0, 8),
         sharedAssetCount: shared.assets.length,
+        jobsQueuedBefore: jobsBefore.summary.queued,
+        jobsRunScanned: jobsRun.scanned,
+        jobsCompletedAfter: jobsAfter.summary.completed,
       },
       null,
       2,

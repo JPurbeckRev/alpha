@@ -1,4 +1,4 @@
-# Alpha API (Owner Experience Baseline)
+# Alpha API (Sprint 5)
 
 ## Run
 ```bash
@@ -10,18 +10,21 @@ npm start
 - Owner Site: `http://localhost:8787/app`
 - Legacy alias: `http://localhost:8787/uat`
 - Shared album page: `http://localhost:8787/app/share.html?token=<token>`
-- Docs: `http://localhost:8787/docs/`
+- Docs index: `http://localhost:8787/docs/`
 
 ## Health
 ### `GET /api/health`
-Returns service and counts (batches/imports/assets/albums/derivatives/shares).
+Service state and top-level counts including:
+- `derivatives`
+- `derivativeJobs`
+- `shares`
 
 ## Staging & Import
 ### `POST /api/staging/upload`
 Multipart form-data (`files` field).
 
 ### `GET /api/staging/:batchId`
-Staging batch summary/status.
+Batch summary/status.
 
 ### `POST /api/imports/:batchId/execute`
 Body:
@@ -37,17 +40,22 @@ Rules:
 - `day_imported`
 - `new_name` (requires `albumName`)
 
-Import log counts include derivative readiness.
+Import now includes derivative-job queue metrics:
+- `derivativeJobsQueued`
+- `derivativeJobsProcessed`
+- `derivativeJobsCompleted`
 
 ### `GET /api/imports/:importId/log`
 Import log payload.
 
 ## Library
 ### `GET /api/library/summary`
-Totals for assets/sourceFiles/derivatives/albums/shares/imports.
+Totals for assets/sourceFiles/derivatives/derivativeJobs/albums/shares/imports.
 
 ### `GET /api/library/assets`
-Paginated asset list with owner-safe source-file download URLs and preview URL.
+Paginated hydrated asset list with:
+- owner source-file download URLs
+- owner preview URL
 
 Query:
 - `page`, `pageSize`
@@ -61,7 +69,7 @@ Query:
 Single hydrated asset payload.
 
 ### `GET /api/library/timeline`
-Day-grouped timeline with preview URLs.
+Day-grouped timeline with hydrated assets and preview URLs.
 
 Query:
 - `groupBy=day_taken|day_imported`
@@ -70,12 +78,12 @@ Query:
 
 ## Owner Media Endpoints
 ### `GET /api/owner/assets/:assetId/preview`
-Returns best-available preview for owner experience:
+Best-available owner preview:
 - preferred: ready derivative
 - fallback: JPEG/MP4 source when available
 
 ### `GET /api/owner/source-files/:sourceFileId/download`
-Downloads original source file (owner privilege path).
+Original source-file download path (owner privilege endpoint).
 
 ## Albums
 ### `GET /api/albums`
@@ -85,7 +93,7 @@ List albums with asset counts.
 Create album.
 
 ### `GET /api/albums/:albumId`
-Album details + paginated hydrated assets.
+Album details + hydrated assets.
 
 ### `PATCH /api/albums/:albumId`
 Update album metadata.
@@ -94,10 +102,27 @@ Update album metadata.
 Delete album.
 
 ### `POST /api/albums/:albumId/assets`
-Add assets.
+Add assets to album.
 
 ### `DELETE /api/albums/:albumId/assets/:assetId`
-Remove asset.
+Remove asset from album.
+
+## Derivative Conversion Jobs (Sprint 5)
+### `GET /api/jobs/derivatives`
+List derivative-job queue with summary counts:
+- queued
+- processing
+- completed
+- failed
+
+### `POST /api/jobs/derivatives/run`
+Trigger queued derivative conversions.
+
+Body:
+```json
+{ "limit": 20, "force": true }
+```
+- `force=true` ignores backoff windows and runs eligible queued/failed jobs immediately.
 
 ## Shares
 ### `GET /api/shares`
@@ -118,8 +143,8 @@ Body:
 Revoke share.
 
 ### `GET /api/shares/:token`
-Read shared payload (public, rate-limited).
+Public shared payload (rate-limited).
 - password via `?password=` or `x-share-password`
 
 ### `GET /api/shares/:token/assets/:assetId/file`
-Streams derivative file only (public, rate-limited).
+Public derivative media file (rate-limited, derivative-only).

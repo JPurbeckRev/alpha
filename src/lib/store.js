@@ -7,6 +7,7 @@ function defaultDb() {
     assets: [],
     sourceFiles: [],
     derivatives: [],
+    derivativeJobs: [],
     batches: [],
     imports: [],
     albums: [],
@@ -20,6 +21,7 @@ function normalizeDb(db) {
   normalized.assets = Array.isArray(normalized.assets) ? normalized.assets : [];
   normalized.sourceFiles = Array.isArray(normalized.sourceFiles) ? normalized.sourceFiles : [];
   normalized.derivatives = Array.isArray(normalized.derivatives) ? normalized.derivatives : [];
+  normalized.derivativeJobs = Array.isArray(normalized.derivativeJobs) ? normalized.derivativeJobs : [];
   normalized.batches = Array.isArray(normalized.batches) ? normalized.batches : [];
   normalized.imports = Array.isArray(normalized.imports) ? normalized.imports : [];
   normalized.albums = Array.isArray(normalized.albums) ? normalized.albums : [];

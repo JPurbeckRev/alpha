@@ -14,6 +14,7 @@ import { ensureDir, pathExists, safeMoveFile } from "./fs-utils.js";
 import { sha256File } from "./hash.js";
 import { extractMetadata } from "./metadata.js";
 import { generateDerivativesForAssets } from "./derivatives.js";
+import { processDerivativeJobs, queueDerivativeJobsForAssets } from "./derivative-jobs.js";
 
 function sanitizeFileName(name) {
   return name.replace(/[<>:"/\\|?*\x00-\x1F]/g, "_");
@@ -290,6 +291,21 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
       derivativesRoot: paths.derivativesRoot,
     });
 
+    const queuedJobs = queueDerivativeJobsForAssets({
+      db,
+      assets,
+      sourceFiles: importedSourceFiles,
+      importId,
+    });
+
+    const processedJobs = await processDerivativeJobs({
+      db,
+      paths,
+      limit: 6,
+    });
+
+    const additionalReady = Math.max(0, processedJobs.completed);
+
     const importLog = {
       id: importId,
       batchId,
@@ -302,12 +318,20 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
         sourceFilesImported: importedSourceFiles.length,
         logicalAssetsCreated: assets.length,
         albumsCreated: albums.length,
-        derivativesReady: derivativeOutput.counts.ready,
-        derivativesUnavailable: derivativeOutput.counts.unavailable,
+        derivativesReady: derivativeOutput.counts.ready + additionalReady,
+        derivativesUnavailable: Math.max(0, derivativeOutput.counts.unavailable - additionalReady),
+        derivativeJobsQueued: queuedJobs.queued,
+        derivativeJobsProcessed: processedJobs.scanned,
+        derivativeJobsCompleted: processedJobs.completed,
         failedFiles: 0,
       },
       createdAlbumIds: albums.map((a) => a.id),
-      notes: [],
+      notes: [
+        queuedJobs.queued > 0 ? `${queuedJobs.queued} derivative conversion job(s) queued` : null,
+        processedJobs.completed > 0 ? `${processedJobs.completed} queued derivative job(s) completed` : null,
+        processedJobs.failed > 0 ? `${processedJobs.failed} derivative job(s) failed` : null,
+        processedJobs.requeued > 0 ? `${processedJobs.requeued} derivative job(s) re-queued for retry` : null,
+      ].filter(Boolean),
     };
 
     db.sourceFiles.push(...importedSourceFiles);

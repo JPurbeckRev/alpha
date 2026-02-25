@@ -13,6 +13,7 @@ This file stores durable team/project memory: decisions, principles, constraints
 - Every completed sprint should expose a clear sprint-evaluation site for PM review (not dashboard tooling).
 - Owner experience should be user-led and maximal-privilege for evaluation, not tool-panel driven.
 - Visual polish is product behavior; avoid obvious gradient banding and low-fidelity UI artifacts.
+- Unsupported media conversion needs explicit job visibility/retry, not silent failure.
 - Sharing must serve derivatives by default; originals remain private unless explicitly authorized.
 - PRD is intentionally resettable each dev round.
 
@@ -34,3 +35,5 @@ This file stores durable team/project memory: decisions, principles, constraints
 - 2026-02-24 22:52 PST — Produced design gate artifacts (flow map, wireframe spec, checklist) and built owner-first maximal-privilege site experience at `/app` (alias `/uat`).
 - 2026-02-24 23:09 PST — Executed additional sprint for visual polish after PM feedback; fixed severe color banding on owner/share experience and tightened UX presentation quality.
 - 2026-02-24 23:09 PST — Updated PRD completion estimate to 58% after Sprint 4.
+- 2026-02-24 23:15 PST — Executed Sprint 5: added derivative conversion job queue/retry APIs and owner-site controls for conversion operations.
+- 2026-02-24 23:15 PST — Updated PRD completion estimate to 61% after Sprint 5.

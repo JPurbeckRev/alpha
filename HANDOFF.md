@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-24 23:09
-- **Current Dev Cycle:** Round 1 (Sprint 4 completed)
-- **Current Status:** Sprint 4 executed and closed
-- **In Progress:** None (awaiting Sprint 5 kickoff)
-- **Next Prescribed Step:** Execute Sprint 5 focused on ARW/MTS conversion workers + queue/retry hardening.
+- **Last Updated (PST):** 2026-02-24 23:15
+- **Current Dev Cycle:** Round 1 (Sprint 5 completed)
+- **Current Status:** Sprint 5 executed and closed
+- **In Progress:** None (awaiting Sprint 6 kickoff)
+- **Next Prescribed Step:** Execute Sprint 6 for conversion reliability (tool detection/fallbacks) + worker/scheduling hardening.
 - **Open Blockers:** None
-- **Overall PRD Completion (estimate):** 58%
+- **Overall PRD Completion (estimate):** 61%
 - **Sprint Evaluation Site:** Owner site at `http://localhost:8787/app` (alias: `http://localhost:8787/uat`), checklist at `http://localhost:8787/docs/UAT.md`, smoke command `npm run uat:smoke`
 
 ## Handoff Entries (append-only)
@@ -27,6 +27,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-24 22:50 | Product Manager (Jon) | Design + Build Team | Design Gate Requested | PM concern raised: product evolution feels non-organic for real photo/video organization usage. Formal design assessment requested before further implementation. | Review and align on `docs/DESIGN_ASSESSMENT.md`; convert into approved Sprint 4 design gate checklist. |
 | 2026-02-24 22:52 | Build Team | Product Manager (Jon) | Design Prework + Owner Site Delivered | Completed requested design artifacts (`DESIGN_ASSESSMENT.md`, `UX_FLOW_MAP.md`, `WIREFRAME_SPEC.md`, `DESIGN_GATE_CHECKLIST.md`) and shipped a maximal-privilege owner site at `/app` (alias `/uat`) with integrated import, browse, albums, sharing, and share-page experience. | PM review and sign-off on design gate checklist; then execute Sprint 4 implementation scope. |
 | 2026-02-24 23:09 | Build Team | Product Manager (Jon) | Sprint 4 Executed | Executed additional sprint after PM visual feedback: fixed severe color banding on owner/share pages, elevated visual quality, and finalized owner-first workflow/API fit. Design-gate artifacts completed and applied in implementation. | Kick off Sprint 5: ARW/MTS conversion workers + queued derivative processing + security/hardening pass. |
+| 2026-02-24 23:15 | Build Team | Product Manager (Jon) | Sprint 5 Executed | Implemented derivative conversion job queue with retry/backoff, job APIs, owner-site job controls, and safer file serving. Updated docs and smoke validation. | Kick off Sprint 6: improve ARW/MTS conversion reliability and move conversion execution toward dedicated worker scheduling. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.
