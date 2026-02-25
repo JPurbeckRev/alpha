@@ -531,8 +531,13 @@
           : `<img src="${asset.previewUrl}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
 
         const actions = includeActions
-          ? `<div class="row" style="margin-top:4px;"><button data-remove="${asset.id}" class="mini">Remove</button></div>`
-          : "";
+          ? `<div class="row" style="margin-top:4px;">
+               <button data-remove="${asset.id}" class="mini">Remove</button>
+               <button data-delete-asset="${asset.id}" class="mini danger">Delete</button>
+             </div>`
+          : `<div class="row" style="margin-top:4px;">
+               <button data-delete-asset="${asset.id}" class="mini danger">Delete</button>
+             </div>`;
 
         return `
           <div class="card ${isFeature ? 'feature' : ''}">
@@ -699,6 +704,18 @@
               </div>
             </div>
           `).join('') || '<div class="muted">No assets yet.</div>';
+
+          document.querySelectorAll('[data-delete-asset]').forEach((btn) => {
+            btn.onclick = async () => {
+              if (!confirm('Permanently delete this item from your library? This will also delete the original file on disk.')) return;
+              try {
+                await api(`/api/library/assets/${btn.dataset.deleteAsset}`, { method: 'DELETE' });
+                await Promise.all([refreshLibrary(), refreshStats(), refreshHomeExperience()]);
+              } catch (error) {
+                alert(`Failed to delete: ${error.message}`);
+              }
+            };
+          });
         } catch (error) {
           $('timelineContainer').innerHTML = `<div class="muted">${esc(error.message)}</div>`;
         }
@@ -757,6 +774,18 @@
               await api(`/api/albums/${albumId}/assets/${btn.dataset.remove}`, { method: 'DELETE' });
               await loadAlbum();
               await refreshAlbums();
+            };
+          });
+
+          document.querySelectorAll('[data-delete-asset]').forEach((btn) => {
+            btn.onclick = async () => {
+              if (!confirm('Permanently delete this item from your library? This will also delete the original file on disk.')) return;
+              try {
+                await api(`/api/library/assets/${btn.dataset.deleteAsset}`, { method: 'DELETE' });
+                await Promise.all([loadAlbum(), refreshLibrary(), refreshStats(), refreshHomeExperience()]);
+              } catch (error) {
+                alert(`Failed to delete: ${error.message}`);
+              }
             };
           });
         } catch (error) {
@@ -879,8 +908,10 @@
       $('deleteAlbumBtn').onclick = async () => {
         const id = $('selectedAlbumPicker').value.trim();
         if (!id) return;
-        if (!confirm('Delete selected album?')) return;
-        await api(`/api/albums/${id}`, { method: 'DELETE' });
+        
+        const deleteAssets = confirm('Album will be deleted. Do you ALSO want to permanently delete all photos/videos contained in this album from your library? (Cancel = Keep photos, only delete album)');
+        
+        await api(`/api/albums/${id}?deleteAssets=${deleteAssets}`, { method: 'DELETE' });
         $('selectedAlbumPicker').value = '';
         $('albumAssets').innerHTML = '';
         await refreshAlbums();

@@ -18,6 +18,7 @@ import {
   removeAssetFromAlbum,
   updateAlbum,
 } from "./lib/albums.js";
+import { deleteAsset } from "./lib/assets.js";
 import { latestReadyShareDerivative } from "./lib/derivatives.js";
 import { createMemoryRateLimiter } from "./lib/rate-limit.js";
 import { listDerivativeJobs, processDerivativeJobs } from "./lib/derivative-jobs.js";
@@ -355,6 +356,15 @@ app.get("/api/library/assets/:assetId", async (req, res) => {
     ...scrubAsset(asset),
     previewUrl: `/api/owner/assets/${asset.id}/preview`,
   });
+});
+
+app.delete("/api/library/assets/:assetId", async (req, res) => {
+  try {
+    const result = await store.update((db) => deleteAsset(db, req.params.assetId));
+    return res.json(result);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
 });
 
 app.get("/api/owner/assets/:assetId/preview", async (req, res) => {
