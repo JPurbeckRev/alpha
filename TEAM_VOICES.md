@@ -52,3 +52,17 @@ For every dev round, log entries by team discipline. If there is a strong signal
 
 ## Initial Entry
 - 2026-02-24 22:17 PST — Directive adopted: discipline voices are mandatory round artifacts.
+
+## Round: Round 1 — Kickoff Charter
+**Window:** 2026-02-24 → in progress
+**PRD Version:** `PRD.md` (refined 2026-02-24)
+
+| Timestamp (PST) | Discipline | Signal Type | Severity | Voice (quote or concise summary) | Impact if Ignored | Prescribed Action | Owner | Status |
+|---|---|---|---|---|---|---|---|---|
+| 2026-02-24 22:19 | Product | Guidance | High | “Be independent; if likely to fail, reach out for support/guidance before failure.” | Increased rework, avoidable delays, preventable misses. | Add explicit risk checkpoints and early-escalation triggers to execution plan. | Build Lead | Open |
+| 2026-02-24 22:19 | Design | Guidance | Low | No strong signal this round. | None. | Proceed with PRD-driven UX assumptions; raise signal during wireframe pass. | Design | Open |
+| 2026-02-24 22:19 | Architecture | Guidance | Low | No strong signal this round. | None. | Validate architecture during backlog decomposition. | Tech Lead | Open |
+| 2026-02-24 22:19 | Frontend | Guidance | Low | No strong signal this round. | None. | Capture FE constraints when stories are cut. | Frontend | Open |
+| 2026-02-24 22:19 | Backend | Guidance | Low | No strong signal this round. | None. | Capture API/data constraints during story definition. | Backend | Open |
+| 2026-02-24 22:19 | Quality | Guidance | Low | No strong signal this round. | None. | Add risk-based test strategy once backlog is drafted. | QA | Open |
+| 2026-02-24 22:19 | DevOps | Guidance | Low | No strong signal this round. | None. | Define deploy/observability baseline during implementation planning. | DevOps | Open |
