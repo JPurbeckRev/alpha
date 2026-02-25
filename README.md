@@ -29,5 +29,5 @@ npm run uat:start
 # in another terminal
 npm run uat:smoke
 ```
-- UAT Console: `http://localhost:8787/uat`
+- Sprint Review Site: `http://localhost:8787/uat`
 - UAT Checklist: `http://localhost:8787/docs/UAT.md`

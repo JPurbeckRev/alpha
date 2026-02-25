@@ -10,7 +10,7 @@ npm run uat:start
 ```
 
 Open:
-- UAT Console: `http://localhost:8787/uat`
+- Sprint Review Site: `http://localhost:8787/uat`
 - API Docs: `http://localhost:8787/docs/API.md`
 
 ## 2) Minimum UAT Flow (Expected Pass)

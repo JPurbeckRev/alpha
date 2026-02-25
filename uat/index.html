@@ -3,103 +3,129 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alpha UAT Console</title>
+    <title>Alpha — Sprint Review Site</title>
     <style>
-      body { font-family: Arial, sans-serif; margin: 24px; background: #0f172a; color: #e2e8f0; }
-      h1, h2 { margin-bottom: 8px; }
-      section { border: 1px solid #334155; border-radius: 10px; padding: 16px; margin-bottom: 16px; background: #111827; }
-      button { padding: 8px 12px; margin: 4px 0; cursor: pointer; }
-      input, select { padding: 8px; margin: 4px 0; min-width: 220px; }
-      pre { background: #020617; border: 1px solid #1e293b; padding: 10px; border-radius: 6px; overflow: auto; max-height: 300px; }
-      .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
-      .muted { opacity: 0.8; font-size: 0.95rem; }
-      a { color: #93c5fd; }
+      :root {
+        --bg: #0b1020;
+        --panel: #121a31;
+        --border: #2a355d;
+        --text: #e5ecff;
+        --muted: #a8b4d8;
+        --accent: #7aa2ff;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, Segoe UI, Arial, sans-serif;
+        background: linear-gradient(180deg, #0b1020 0%, #121a31 100%);
+        color: var(--text);
+      }
+      .wrap { max-width: 980px; margin: 0 auto; padding: 24px; }
+      header { margin-bottom: 20px; }
+      h1 { margin: 0 0 8px; font-size: 1.8rem; }
+      p { color: var(--muted); margin: 0; }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+      h2 { margin: 0 0 10px; font-size: 1.1rem; }
+      .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+      button, input, select {
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #0e152b;
+        color: var(--text);
+        padding: 10px 12px;
+      }
+      button { cursor: pointer; border-color: #3952a3; }
+      button:hover { border-color: var(--accent); }
+      input, select { min-width: 210px; }
+      pre {
+        background: #090f22;
+        border: 1px solid #1e2a50;
+        border-radius: 10px;
+        padding: 12px;
+        max-height: 280px;
+        overflow: auto;
+      }
+      a { color: var(--accent); }
+      .label { color: var(--muted); font-size: 0.9rem; }
+      code { color: #b8ccff; }
     </style>
   </head>
   <body>
-    <h1>Alpha UAT Console</h1>
-    <p class="muted">Use this page to validate Sprint 2 behavior end-to-end.</p>
+    <div class="wrap">
+      <header>
+        <h1>Alpha Sprint Review Site</h1>
+        <p>This is the sprint evaluation site (not a dashboard). Use it to run one realistic flow per sprint and review output.</p>
+      </header>
 
-    <section>
-      <h2>1) Health & Summary</h2>
-      <div class="row">
-        <button id="checkHealthBtn">Check Health</button>
-        <button id="checkSummaryBtn">Check Library Summary</button>
-      </div>
-      <pre id="healthOut">(results)</pre>
-    </section>
+      <section class="card">
+        <h2>Step 1 — Confirm service health</h2>
+        <div class="row">
+          <button id="checkHealthBtn">Check Health</button>
+          <button id="checkSummaryBtn">Check Library Summary</button>
+        </div>
+        <pre id="healthOut">(results)</pre>
+      </section>
 
-    <section>
-      <h2>2) Upload + Import</h2>
-      <div class="row">
-        <input id="filesInput" type="file" multiple />
-        <button id="uploadBtn">Upload to Staging</button>
-      </div>
-      <div class="row">
-        <label>
-          Album Rule:
+      <section class="card">
+        <h2>Step 2 — Import a media batch</h2>
+        <div class="row">
+          <input id="filesInput" type="file" multiple />
+          <button id="uploadBtn">Upload Files</button>
+        </div>
+        <div class="row">
           <select id="ruleSelect">
-            <option value="day_imported">day_imported</option>
-            <option value="day_taken">day_taken</option>
-            <option value="new_name">new_name</option>
+            <option value="day_imported">Album by import day</option>
+            <option value="day_taken">Album by taken day</option>
+            <option value="new_name">Album by custom name</option>
           </select>
-        </label>
-        <input id="albumNameInput" placeholder="Album name (for new_name)" />
-        <button id="importBtn">Execute Import</button>
-      </div>
-      <p class="muted">Current Batch ID: <code id="batchIdText">none</code></p>
-      <pre id="importOut">(results)</pre>
-    </section>
+          <input id="albumNameInput" placeholder="Album name (for custom rule)" />
+          <button id="importBtn">Run Import</button>
+        </div>
+        <div class="label">Current batch: <code id="batchIdText">none</code></div>
+        <pre id="importOut">(results)</pre>
+      </section>
 
-    <section>
-      <h2>3) Timeline / Asset Queries</h2>
-      <div class="row">
-        <button id="timelineTakenBtn">Timeline (day_taken)</button>
-        <button id="timelineImportedBtn">Timeline (day_imported)</button>
-        <button id="assetsBtn">List Assets</button>
-      </div>
-      <pre id="timelineOut">(results)</pre>
-    </section>
+      <section class="card">
+        <h2>Step 3 — Browse what was imported</h2>
+        <div class="row">
+          <button id="timelineTakenBtn">Timeline by taken date</button>
+          <button id="timelineImportedBtn">Timeline by import date</button>
+          <button id="assetsBtn">List latest assets</button>
+          <button id="listAlbumsBtn">List albums</button>
+        </div>
+        <pre id="browseOut">(results)</pre>
+      </section>
 
-    <section>
-      <h2>4) Album CRUD</h2>
-      <div class="row">
-        <input id="newAlbumName" placeholder="New album name" />
-        <button id="createAlbumBtn">Create Album</button>
-        <button id="listAlbumsBtn">List Albums</button>
-      </div>
-      <div class="row">
-        <input id="renameAlbumId" placeholder="Album ID" />
-        <input id="renameAlbumName" placeholder="Renamed album" />
-        <button id="renameAlbumBtn">Rename Album</button>
-      </div>
-      <div class="row">
-        <input id="deleteAlbumId" placeholder="Album ID" />
-        <button id="deleteAlbumBtn">Delete Album</button>
-      </div>
-      <pre id="albumsOut">(results)</pre>
-    </section>
+      <section class="card">
+        <h2>Step 4 — Validate share flow</h2>
+        <div class="row">
+          <input id="shareAlbumId" placeholder="Album ID to share" />
+          <input id="sharePassword" placeholder="Optional share password" />
+          <input id="shareExpiresAt" placeholder="Optional expiry ISO" />
+          <button id="createShareBtn">Create Share Link</button>
+        </div>
+        <div class="row">
+          <input id="shareToken" placeholder="Share token" />
+          <input id="shareAccessPassword" placeholder="Password for share access" />
+          <button id="openShareBtn">Open Share Payload</button>
+        </div>
+        <pre id="shareOut">(results)</pre>
+      </section>
 
-    <section>
-      <h2>5) Sharing (Sprint 3)</h2>
-      <div class="row">
-        <input id="shareAlbumId" placeholder="Album ID to share" />
-        <input id="sharePassword" placeholder="Optional share password" />
-        <input id="shareExpiresAt" placeholder="Optional expiry ISO (e.g. 2026-12-31T23:59:59Z)" />
-        <button id="createShareBtn">Create Share Link</button>
-      </div>
-      <div class="row">
-        <input id="shareToken" placeholder="Share token" />
-        <input id="shareAccessPassword" placeholder="Share password (if required)" />
-        <button id="openShareBtn">Open Share</button>
-      </div>
-      <pre id="shareOut">(results)</pre>
-    </section>
-
-    <section>
-      <h2>UAT Guide</h2>
-      <p>Detailed checklist: <a href="/docs/UAT.md" target="_blank">/docs/UAT.md</a></p>
-    </section>
+      <section class="card">
+        <h2>Sprint Notes</h2>
+        <p>
+          Checklist: <a href="/docs/UAT.md" target="_blank">/docs/UAT.md</a>
+          · API: <a href="/docs/API.md" target="_blank">/docs/API.md</a>
+        </p>
+      </section>
+    </div>
 
     <script>
       let currentBatchId = null;
@@ -149,14 +175,14 @@
 
       document.getElementById("importBtn").onclick = async () => {
         if (!currentBatchId) return print("importOut", { error: "Upload a batch first" });
+
         const rule = document.getElementById("ruleSelect").value;
         const albumName = document.getElementById("albumNameInput").value || null;
 
         try {
-          const payload = { createAlbums: true, rule, albumName };
           const body = await api(`/api/imports/${currentBatchId}/execute`, {
             method: "POST",
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ createAlbums: true, rule, albumName }),
           });
           print("importOut", body);
         } catch (e) {
@@ -165,41 +191,19 @@
       };
 
       document.getElementById("timelineTakenBtn").onclick = async () => {
-        try { print("timelineOut", await api("/api/library/timeline?groupBy=day_taken")); } catch (e) { print("timelineOut", { error: String(e) }); }
+        try { print("browseOut", await api("/api/library/timeline?groupBy=day_taken")); } catch (e) { print("browseOut", { error: String(e) }); }
       };
 
       document.getElementById("timelineImportedBtn").onclick = async () => {
-        try { print("timelineOut", await api("/api/library/timeline?groupBy=day_imported")); } catch (e) { print("timelineOut", { error: String(e) }); }
+        try { print("browseOut", await api("/api/library/timeline?groupBy=day_imported")); } catch (e) { print("browseOut", { error: String(e) }); }
       };
 
       document.getElementById("assetsBtn").onclick = async () => {
-        try { print("timelineOut", await api("/api/library/assets?page=1&pageSize=50")); } catch (e) { print("timelineOut", { error: String(e) }); }
-      };
-
-      document.getElementById("createAlbumBtn").onclick = async () => {
-        try {
-          const name = document.getElementById("newAlbumName").value;
-          print("albumsOut", await api("/api/albums", { method: "POST", body: JSON.stringify({ name }) }));
-        } catch (e) { print("albumsOut", { error: String(e) }); }
+        try { print("browseOut", await api("/api/library/assets?page=1&pageSize=50")); } catch (e) { print("browseOut", { error: String(e) }); }
       };
 
       document.getElementById("listAlbumsBtn").onclick = async () => {
-        try { print("albumsOut", await api("/api/albums")); } catch (e) { print("albumsOut", { error: String(e) }); }
-      };
-
-      document.getElementById("renameAlbumBtn").onclick = async () => {
-        try {
-          const id = document.getElementById("renameAlbumId").value;
-          const name = document.getElementById("renameAlbumName").value;
-          print("albumsOut", await api(`/api/albums/${id}`, { method: "PATCH", body: JSON.stringify({ name }) }));
-        } catch (e) { print("albumsOut", { error: String(e) }); }
-      };
-
-      document.getElementById("deleteAlbumBtn").onclick = async () => {
-        try {
-          const id = document.getElementById("deleteAlbumId").value;
-          print("albumsOut", await api(`/api/albums/${id}`, { method: "DELETE" }));
-        } catch (e) { print("albumsOut", { error: String(e) }); }
+        try { print("browseOut", await api("/api/albums")); } catch (e) { print("browseOut", { error: String(e) }); }
       };
 
       document.getElementById("createShareBtn").onclick = async () => {

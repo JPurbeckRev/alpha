@@ -10,7 +10,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 - **Next Prescribed Step:** Execute Sprint 4 to deepen M4 (ARW/MTS derivative conversion + user-facing share UX) and begin hardening.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 53%
-- **UAT Environment:** Ready at `http://localhost:8787/uat` with checklist at `http://localhost:8787/docs/UAT.md` and smoke command `npm run uat:smoke`
+- **Sprint Evaluation Site:** Ready at `http://localhost:8787/uat` with checklist at `http://localhost:8787/docs/UAT.md` and smoke command `npm run uat:smoke`
 
 ## Handoff Entries (append-only)
 

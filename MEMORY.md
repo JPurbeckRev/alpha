@@ -10,7 +10,7 @@ This file stores durable team/project memory: decisions, principles, constraints
 - Every dev round must include per-discipline voice logging (including objections/advice/guidance/admonishment/frustration).
 - Execute independently by default; escalate before likely failure.
 - HANDOFF.md must be updated every dev cycle with clear current state + next step.
-- Every completed sprint should expose a clear UAT path for PM evaluation.
+- Every completed sprint should expose a clear sprint-evaluation site for PM review (not dashboard tooling).
 - Sharing must serve derivatives by default; originals remain private unless explicitly authorized.
 - PRD is intentionally resettable each dev round.
 
@@ -27,3 +27,4 @@ This file stores durable team/project memory: decisions, principles, constraints
 - 2026-02-24 22:44 PST — Executed Sprint 3: tokenized sharing + password/expiry + derivative-only delivery + share rate limiting.
 - 2026-02-24 22:44 PST — Published stronger UAT path (console + checklist + smoke script) for PM evaluation.
 - 2026-02-24 22:44 PST — Updated PRD completion estimate to 53% after Sprint 3.
+- 2026-02-24 22:46 PST — Jon clarified preference: provide a sprint evaluation site experience, not a UAT dashboard/panel framing.
