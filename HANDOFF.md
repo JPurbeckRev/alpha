@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 14:35
-- **Current Dev Cycle:** Round 1 (Sprint 14 completed)
-- **Current Status:** Final M5 Administrative and Maintenance tools delivered. Owner can now manually trigger conversion workers and reset failed jobs via the Settings Studio. Theme and View Density engines fully harmonized.
-- **In Progress:** None (Project Ready for Handover)
-- **Next Prescribed Step:** Perform final UAT and sign off on Round 1.
+- **Last Updated (PST):** 2026-02-25 15:32
+- **Current Dev Cycle:** Round 1 (Sprint 16.1 completed)
+- **Current Status:** First-run empty-state coaching UI delivered for Library and Albums, with clear CTA routing to Import/Library so new users see guided next actions instead of blank states.
+- **In Progress:** None
+- **Next Prescribed Step:** Execute Sprint 16 mobile responsiveness pass.
 - **Open Blockers:** None
-- **Overall PRD Completion (estimate):** 98%
+- **Overall PRD Completion (estimate):** 99%
 
 ### Project Snapshot (primary experience)
 - **Primary experience now:** Upload batch → explicit import → optional album creation (Day Taken / Day Imported / New Name) → browse library/albums → create protected share links.
@@ -45,6 +45,8 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 10:18 | Design Agent | Product Manager (Jon) | Sprint 12 Executed | Delivered visual storytelling polish: implemented "rhythmic" grid in Timeline/Albums with periodic 2x2 hero feature cards; fixed 429 rate-limit bottleneck (raised 120->1200/min) that broke album browsing; refined card density/typography for improved narrative flow. | Kick off Sprint 13: Implement persistent user settings and M5 admin tools. |
 | 2026-02-25 10:48 | Design Agent | Product Manager (Jon) | Sprint 13 Executed | Shipped persistent Owner Settings: added backend storage and API for user preferences; implemented Theme engine (Dark, Light, OLED) and View Density controls (Comfortable to Compact); unified settings under a new dedicated Studio tab. | Kick off Sprint 14: Finalize M5 maintenance and diagnostic tools. |
 | 2026-02-25 14:35 | Design Agent | Product Manager (Jon) | Sprint 14 Executed | Shipped M5 Maintenance tools: added API and UI for resetting failed jobs and manual worker triggers; finalized visual theme harmonization and fixed View Density CSS selector bugs. | Perform final UAT and sign off. |
+| 2026-02-25 15:15 | Design Agent | Product Manager (Jon) | Sprint 15 Executed | Implemented Library Deletion: added full-chain deletion for assets (source files + derivatives + DB records); upgraded album deletion to prompt for optional content purge; established Designer-Implementer workflow protocol. | Kick off Sprint 16: Mobile UI pass. |
+| 2026-02-25 15:32 | Executor Agent | Design Agent | Sprint 16.1 Executed | Implemented first-run empty-state coaching UI for Library Timeline, Albums list, and empty album detail view. Added clear CTA routing (Go to Import / Open Library) to avoid blank first-run surfaces. Smoke UAT passed. | Hand off Sprint 16.2 mobile responsiveness pass. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

@@ -284,6 +284,22 @@
         border: 1px solid rgba(131, 175, 255, 0.45);
         background: var(--accent-bg);
       }
+      .empty-state {
+        border: 1px dashed var(--line);
+        border-radius: 12px;
+        padding: 28px 20px;
+        text-align: center;
+        background: rgba(14, 22, 42, 0.42);
+      }
+      .empty-state strong {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 1rem;
+      }
+      .empty-state .muted {
+        max-width: 560px;
+        margin: 0 auto;
+      }
       @media (max-width: 960px) {
         .split { grid-template-columns: 1fr; }
         .span-8, .span-6, .span-4 { grid-column: span 12; }
@@ -523,6 +539,12 @@
 
       document.querySelectorAll(".tab").forEach((btn) => btn.onclick = () => setTab(btn.dataset.tab));
 
+      function bindEmptyStateCtas() {
+        document.querySelectorAll('[data-empty-cta]').forEach((btn) => {
+          btn.onclick = () => setTab(btn.dataset.emptyCta);
+        });
+      }
+
       function mediaCard(asset, index = 0, includeActions = false) {
         const isVideo = asset.type === "video";
         const isFeature = (index % 7 === 0);
@@ -546,6 +568,18 @@
               <div class="mini"><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown")}</span></div>
               <div class="muted mini">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
               ${actions}
+            </div>
+          </div>
+        `;
+      }
+
+      function emptyState(title, body, ctaText, ctaTab, ctaId) {
+        return `
+          <div class="empty-state">
+            <strong>${esc(title)}</strong>
+            <div class="muted mini">${esc(body)}</div>
+            <div class="row" style="justify-content:center; margin-top:12px;">
+              <button class="primary" data-empty-cta="${esc(ctaTab)}" id="${esc(ctaId)}">${esc(ctaText)}</button>
             </div>
           </div>
         `;
@@ -703,7 +737,15 @@
                 ${group.assets.map((a, i) => mediaCard(a, i)).join('')}
               </div>
             </div>
-          `).join('') || '<div class="muted">No assets yet.</div>';
+          `).join('') || emptyState(
+            'Your library is empty',
+            'Upload files in Import, then run import to build your timeline and start organizing stories.',
+            'Go to Import',
+            'import',
+            'libraryEmptyGoImportBtn'
+          );
+
+          bindEmptyStateCtas();
 
           document.querySelectorAll('[data-delete-asset]').forEach((btn) => {
             btn.onclick = async () => {
@@ -735,7 +777,15 @@
                 <button data-share-album="${a.id}">Share</button>
               </div>
             </div>
-          `).join('') || '<div class="muted">No albums yet.</div>';
+          `).join('') || emptyState(
+            'No albums yet',
+            'Create your first album from items in your library after importing your photos and videos.',
+            'Open Library',
+            'library',
+            'albumsEmptyGoLibraryBtn'
+          );
+
+          bindEmptyStateCtas();
 
           const options = ['<option value="">Select album…</option>', ...state.albums.map((a) => `<option value="${a.id}">${esc(a.name)}</option>`)].join('');
           $('selectedAlbumPicker').innerHTML = options;
@@ -767,7 +817,15 @@
         try {
           const album = await api(`/api/albums/${albumId}`);
           $('renameAlbumName').value = album.name;
-          $('albumAssets').innerHTML = album.assets.map((a, i) => mediaCard(a, i, true)).join('') || '<div class="muted">Album is empty.</div>';
+          $('albumAssets').innerHTML = album.assets.map((a, i) => mediaCard(a, i, true)).join('') || emptyState(
+            'This album is empty',
+            'Add items from your library timeline to start building this story.',
+            'Go to Library',
+            'library',
+            'albumDetailEmptyGoLibraryBtn'
+          );
+
+          bindEmptyStateCtas();
 
           document.querySelectorAll('[data-remove]').forEach((btn) => {
             btn.onclick = async () => {
