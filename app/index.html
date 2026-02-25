@@ -56,6 +56,43 @@
         --accent-bg: linear-gradient(145deg, #111111, #000000);
       }
 
+      [data-theme="nord"] {
+        --bg: #2e3440;
+        --panel: rgba(59, 66, 82, 0.8);
+        --panel-2: #434c5e;
+        --text: #eceff4;
+        --muted: #d8dee9;
+        --line: #4c566a;
+        --accent: #88c0d0;
+        --grad-1: rgba(136, 192, 208, 0.1);
+        --grad-2: rgba(143, 188, 187, 0.05);
+        --bg-top: #3b4252;
+        --bg-mid: #2e3440;
+        --bg-bot: #2e3440;
+        --accent-bg: linear-gradient(145deg, #4c566a, #3b4252);
+      }
+
+      [data-theme="forest"] {
+        --bg: #1a1c19;
+        --panel: rgba(26, 29, 25, 0.8);
+        --panel-2: #232621;
+        --text: #e2e3dd;
+        --muted: #c6c7c1;
+        --line: #3d3f3a;
+        --accent: #a4c99e;
+        --grad-1: rgba(164, 201, 158, 0.08);
+        --grad-2: rgba(164, 201, 158, 0.04);
+        --bg-top: #1a1c19;
+        --bg-mid: #141613;
+        --bg-bot: #141613;
+        --accent-bg: linear-gradient(145deg, #2a2d28, #1a1c19);
+      }
+
+      [data-view="standard"] {
+        --card-size: 200px;
+        --card-gap: 16px;
+      }
+
       [data-view="comfortable"] {
         --card-size: 260px;
         --card-gap: 24px;
@@ -401,6 +438,8 @@
                 <option value="dark">Deep Blue (Default)</option>
                 <option value="light">Solar Light</option>
                 <option value="oled">Midnight (OLED)</option>
+                <option value="nord">Nordic Frost</option>
+                <option value="forest">Silent Forest</option>
               </select>
             </div>
             <div class="row">
