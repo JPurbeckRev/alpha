@@ -395,7 +395,8 @@
 
       <section id="tab-home">
         <h2>Home</h2>
-        <div class="home-grid">
+        <div id="homeEmptyState" class="hidden"></div>
+        <div id="homeContent" class="home-grid">
           <div class="home-card cta-hero span-12">
             <div><strong>Import your next story</strong></div>
             <div class="muted mini" style="margin: 6px 0 10px;">Upload a batch, pick album behavior, and get straight to browse + share.</div>
@@ -445,6 +446,8 @@
           <button class="primary" id="runImportBtn">Upload + Import</button>
         </div>
         <div class="muted">This owner flow is explicit staging + import in one guided action.</div>
+        <div id="importPrepStatus" class="mini muted" style="margin-top:8px;">No files selected yet.</div>
+        <progress id="importPrepProgress" max="100" value="0" style="width:100%; margin-top:8px; display:none;"></progress>
         <div id="importResultPanel" class="list-item" style="display:none; margin:10px 0;"></div>
         <details>
           <summary class="mini muted">Import details</summary>
@@ -583,6 +586,41 @@
         return `${days}d ago`;
       }
 
+      function nextTick() {
+        return new Promise((resolve) => setTimeout(resolve, 0));
+      }
+
+      function updateImportSelectionSummary() {
+        const files = $('importFiles').files;
+        if (!files?.length) {
+          $('importPrepStatus').textContent = 'No files selected yet.';
+          $('importPrepProgress').style.display = 'none';
+          $('importPrepProgress').value = 0;
+          return;
+        }
+
+        const sample = Array.from(files).slice(0, 3).map((f) => f.name).join(', ');
+        const extra = files.length > 3 ? ` +${files.length - 3} more` : '';
+        $('importPrepStatus').textContent = `Ready to import ${files.length} files. Sample: ${sample}${extra}`;
+      }
+
+      async function appendFilesInBatches(fd, files, onProgress) {
+        const total = files.length;
+        const batchSize = 25;
+        for (let i = 0; i < total; i++) {
+          fd.append('files', files[i]);
+
+          const completed = i + 1;
+          if (onProgress && (completed === total || completed % batchSize === 0)) {
+            onProgress(completed, total);
+          }
+
+          if (completed % batchSize === 0) {
+            await nextTick();
+          }
+        }
+      }
+
       async function api(url, options = {}) {
         const res = await fetch(url, {
           headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -675,6 +713,21 @@
             api('/api/albums?page=1&pageSize=6'),
           ]);
 
+          const isEmpty = !summary.assets && !summary.imports;
+          $('homeEmptyState').classList.toggle('hidden', !isEmpty);
+          $('homeContent').classList.toggle('hidden', isEmpty);
+
+          if (isEmpty) {
+            $('homeEmptyState').innerHTML = emptyState(
+              'Welcome to Alpha',
+              'Your library is currently empty. To get started, import your first batch of photos or videos and we\'ll help you organize them into stories.',
+              'Get Started: Import Photos',
+              'import',
+              'homeEmptyGoImportBtn'
+            );
+            bindEmptyStateCtas();
+          }
+
           const latest = recentImports.items?.[0];
           $('homeLastImport').innerHTML = latest
             ? `Last import <strong>${formatRelativeTime(latest.createdAt)}</strong> · ${latest.counts.totalFilesInBatch} files · ${latest.counts.logicalAssetsCreated} assets · ${latest.counts.albumsCreated} albums`
@@ -711,9 +764,6 @@
             };
           });
 
-          if (!summary.assets && !summary.imports) {
-            $('homeLastImport').innerHTML = 'No imports yet. Click <strong>Import Photos/Videos</strong> to begin.';
-          }
         } catch (error) {
           $('homeLastImport').textContent = `Home load error: ${error.message}`;
         }
@@ -758,10 +808,33 @@
         const files = $('importFiles').files;
         if (!files.length) return $('importOut').textContent = 'Select files first.';
 
+        const runBtn = $('runImportBtn');
+        const progress = $('importPrepProgress');
+        const status = $('importPrepStatus');
+        const total = files.length;
+
+        runBtn.disabled = true;
+        progress.style.display = 'block';
+        progress.value = 0;
+        status.textContent = `Preparing ${total} files for upload…`;
+
         const fd = new FormData();
-        for (const file of files) fd.append('files', file);
+
+        let lastPaint = 0;
+        const onPrepProgress = (completed, count) => {
+          const now = performance.now();
+          if (completed !== count && now - lastPaint < 80) return;
+          lastPaint = now;
+          const pct = Math.round((completed / count) * 100);
+          progress.value = pct;
+          status.textContent = `Preparing upload… ${completed}/${count} files (${pct}%)`;
+        };
 
         try {
+          await appendFilesInBatches(fd, files, onPrepProgress);
+          progress.value = 100;
+          status.textContent = `Uploading ${total} files…`;
+
           const uploadRes = await fetch('/api/staging/upload', { method: 'POST', body: fd });
           const upload = await uploadRes.json();
           if (!uploadRes.ok) throw new Error(upload.error || 'Upload failed');
@@ -769,6 +842,7 @@
           const rule = $('importRule').value;
           const albumName = $('importAlbumName').value || null;
 
+          status.textContent = 'Running import…';
           const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
             method: 'POST',
             body: JSON.stringify({ createAlbums: true, rule, albumName }),
@@ -776,10 +850,18 @@
 
           $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
           renderImportResultPanel(upload, importLog);
+          status.textContent = `Import complete. ${importLog.counts.logicalAssetsCreated} assets created from ${importLog.counts.totalFilesInBatch} files.`;
           await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
         } catch (error) {
           $('importOut').textContent = `Error: ${error.message}`;
           $('importResultPanel').style.display = 'none';
+          status.textContent = `Import failed: ${error.message}`;
+        } finally {
+          runBtn.disabled = false;
+          setTimeout(() => {
+            progress.style.display = 'none';
+            progress.value = 0;
+          }, 500);
         }
       }
 
@@ -1012,6 +1094,7 @@
       $('homeOpenSharingBtn').onclick = () => setTab('sharing');
       $('homeRefreshBtn').onclick = () => Promise.all([refreshStats(), refreshHomeExperience()]);
 
+      $('importFiles').onchange = updateImportSelectionSummary;
       $('runImportBtn').onclick = runImportFlow;
       $('refreshLibraryBtn').onclick = refreshLibrary;
       $('createAlbumBtn').onclick = async () => {
@@ -1077,6 +1160,7 @@
         refreshHomeExperience(),
         loadSettings(),
       ]);
+      updateImportSelectionSummary();
     </script>
   </body>
 </html>

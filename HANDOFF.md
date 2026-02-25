@@ -3,11 +3,11 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 15:39
-- **Current Dev Cycle:** Round 1 (Sprint 16.2 completed)
-- **Current Status:** Mobile responsiveness pass delivered across owner app views: mobile-friendly tab rail behavior, stacked form/action controls, touch target sizing, and adaptive media grid scaling to prevent horizontal overflow on small screens.
+- **Last Updated (PST):** 2026-02-25 15:50
+- **Current Dev Cycle:** Round 1 (Sprint 17 completed)
+- **Current Status:** Import flow frontend performance hardening delivered: batched FormData file preparation with main-thread yielding, throttled preparation progress updates, and lightweight import selection summary to avoid heavy DOM work during large batches.
 - **In Progress:** None
-- **Next Prescribed Step:** Designer review + define next backlog chunk after Sprint 16 completion.
+- **Next Prescribed Step:** Designer review Sprint 17 outcomes and issue Sprint 18 packet.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 99%
 
@@ -48,6 +48,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 15:15 | Design Agent | Product Manager (Jon) | Sprint 15 Executed | Implemented Library Deletion: added full-chain deletion for assets (source files + derivatives + DB records); upgraded album deletion to prompt for optional content purge; established Designer-Implementer workflow protocol. | Kick off Sprint 16: Mobile UI pass. |
 | 2026-02-25 15:32 | Executor Agent | Design Agent | Sprint 16.1 Executed | Implemented first-run empty-state coaching UI for Library Timeline, Albums list, and empty album detail view. Added clear CTA routing (Go to Import / Open Library) to avoid blank first-run surfaces. Smoke UAT passed. | Hand off Sprint 16.2 mobile responsiveness pass. |
 | 2026-02-25 15:39 | Executor Agent | Design Agent | Sprint 16.2 Executed | Delivered mobile responsiveness pass in owner UI: responsive tab rail behavior, stacked mobile form/button layout, larger tap targets, and mobile grid behavior (2-column <=768px, 1-column <=480px) with hero-card span normalization to eliminate overflow. Smoke UAT passed; manually checked at 375x812 viewport. | Designer review and issue next implementation packet. |
+| 2026-02-25 15:50 | Executor Agent | Design Agent | Sprint 17 Executed | Implemented import UI performance/memory hardening: chunked file-to-FormData preparation with event-loop yielding, throttled progress text/bar updates to reduce reflow pressure, and lightweight file selection summary (sample only) to avoid heavy render paths on large batches. Smoke UAT passed. | Designer review and issue Sprint 18 packet. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.
@@ -108,4 +109,30 @@ Validation commands:
 - Manually verify the UI at `http://localhost:8787/app` using browser DevTools device emulation (e.g., iPhone size).
 Commit message suggestion:
 feat(ui): implement mobile responsiveness pass for main app views
+```
+
+### Sprint 17 (Import Performance & Memory Optimization)
+```md
+Task ID: Sprint-17-Import-Memory-Fix
+Goal: Fix frontend browser lock-ups and memory leaks during bulk photo imports.
+Scope (files allowed):
+- Frontend JavaScript handling the upload/import flow (e.g., `public/app/app.js`, `public/app/import.js`, or equivalent).
+- Frontend HTML/CSS if virtualized lists or paginated views are needed.
+Non-goals:
+- Changes to the backend upload or processing APIs.
+- Changes to worker conversion logic.
+Implementation notes:
+- **Thumbnail Memory Management:** If creating local thumbnails using `URL.createObjectURL()`, ensure `URL.revokeObjectURL()` is called when the image is no longer needed or when the import completes to prevent memory leaks.
+- **Event Loop Blocking:** Process files in batches or use `requestAnimationFrame` / `setTimeout` to yield back to the main thread during file iteration so the UI doesn't freeze.
+- **DOM Rendering Optimization:** Prevent rendering thousands of DOM nodes at once. If a user selects 500 photos, do not render 500 high-res preview cards simultaneously. Use a lightweight list, virtual scrolling, or just show an aggregate progress bar / status (e.g., "Ready to import 500 files") with only a few sample thumbnails.
+- **Progress Throttling:** Throttle progress bar UI updates so we aren't triggering forced reflows every few milliseconds.
+Acceptance criteria:
+- User can select and queue 500+ photos for import without the browser freezing or crashing.
+- Memory usage remains stable during the staging and upload phases.
+- The UI remains responsive (buttons clickable, animations smooth) while files are being processed.
+Validation commands:
+- Open the app, go to Import, and select a massive folder of dummy images (or 500+ files).
+- Monitor the browser Task Manager / Performance tab to ensure memory doesn't spiral out of control and the main thread isn't blocked.
+Commit message suggestion:
+fix(import): resolve browser lock-up and memory leaks during bulk upload
 ```
