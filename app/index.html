@@ -17,16 +17,28 @@
         --radius: 14px;
         --card-size: 200px;
         --card-gap: 16px;
+
+        /* Gradients */
+        --grad-1: rgba(86, 125, 210, 0.28);
+        --grad-2: rgba(110, 84, 185, 0.22);
+        --bg-top: #111b33;
+        --bg-mid: #0d1424;
+        --bg-bot: #0a1120;
       }
 
       [data-theme="light"] {
-        --bg: #f8faff;
-        --panel: rgba(255, 255, 255, 0.8);
+        --bg: #f2f5f9;
+        --panel: rgba(255, 255, 255, 0.7);
         --panel-2: #ffffff;
         --text: #1a1f36;
         --muted: #5e6c84;
-        --line: #d1d9e6;
+        --line: #dce3f0;
         --accent: #2e60ff;
+        --grad-1: rgba(46, 96, 255, 0.08);
+        --grad-2: rgba(46, 96, 255, 0.04);
+        --bg-top: #f8faff;
+        --bg-mid: #f2f5f9;
+        --bg-bot: #ebf0f7;
       }
 
       [data-theme="oled"] {
@@ -34,6 +46,11 @@
         --panel: rgba(18, 18, 18, 0.8);
         --panel-2: #0a0a0a;
         --line: #1a1a1a;
+        --grad-1: rgba(0, 0, 0, 0);
+        --grad-2: rgba(0, 0, 0, 0);
+        --bg-top: #000000;
+        --bg-mid: #000000;
+        --bg-bot: #000000;
       }
 
       [data-view="comfortable"] {
@@ -53,9 +70,9 @@
         min-height: 100vh;
         background-color: var(--bg);
         background-image:
-          radial-gradient(1200px 700px at 15% -20%, rgba(86, 125, 210, 0.28), rgba(86, 125, 210, 0) 60%),
-          radial-gradient(900px 600px at 85% 0%, rgba(110, 84, 185, 0.22), rgba(110, 84, 185, 0) 58%),
-          linear-gradient(180deg, #111b33 0%, #0d1424 56%, #0a1120 100%);
+          radial-gradient(1200px 700px at 15% -20%, var(--grad-1), rgba(0,0,0,0) 60%),
+          radial-gradient(900px 600px at 85% 0%, var(--grad-2), rgba(0,0,0,0) 58%),
+          linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 56%, var(--bg-bot) 100%);
         background-attachment: fixed;
       }
       body::before {
