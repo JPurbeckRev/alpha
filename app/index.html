@@ -1215,16 +1215,18 @@
           return;
         }
 
+        const deletePhotosToo = confirm('Also delete photos/videos inside this album?\n\nOK = Delete album + media\nCancel = Delete album only (keep media in library)');
+
         try {
           btn.disabled = true;
-          status.textContent = 'Deleting album...';
-          await api(`/api/albums/${albumId}`, { method: 'DELETE' });
+          status.textContent = deletePhotosToo ? 'Deleting album and media...' : 'Deleting album (keeping media)...';
+          await api(`/api/albums/${albumId}?deleteAssets=${deletePhotosToo ? 'true' : 'false'}`, { method: 'DELETE' });
           picker.value = '';
           $('albumAssets').innerHTML = '';
           albumDeleteConfirmUntil = 0;
           btn.textContent = 'Delete';
-          status.textContent = 'Album deleted.';
-          await Promise.all([refreshAlbums(), refreshHomeExperience(), refreshShares(), refreshStats()]);
+          status.textContent = deletePhotosToo ? 'Album and media deleted.' : 'Album deleted. Media kept in library.';
+          await Promise.all([refreshAlbums(), refreshHomeExperience(), refreshShares(), refreshStats(), refreshLibrary()]);
         } catch (err) {
           status.textContent = `Delete failed: ${err.message}`;
           btn.textContent = 'Delete';
