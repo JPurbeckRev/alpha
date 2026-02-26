@@ -18,6 +18,8 @@ function defaultDb() {
       viewMode: "comfortable",
       defaultGrouping: "day_taken",
     },
+    users: [],
+    sessions: [],
   };
 }
 
@@ -33,6 +35,8 @@ function normalizeDb(db) {
   normalized.albumAssets = Array.isArray(normalized.albumAssets) ? normalized.albumAssets : [];
   normalized.shares = Array.isArray(normalized.shares) ? normalized.shares : [];
   normalized.settings = normalized.settings ?? defaultDb().settings;
+  normalized.users = Array.isArray(normalized.users) ? normalized.users : [];
+  normalized.sessions = Array.isArray(normalized.sessions) ? normalized.sessions : [];
   return normalized;
 }
 

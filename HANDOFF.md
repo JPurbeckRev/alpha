@@ -3,13 +3,13 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 16:48
-- **Current Dev Cycle:** Round 1 (Sprint 18 upload performance pass)
-- **Current Status:** Upload/import performance and transparency pass shipped: backend staging/import now process files with bounded concurrency (instead of strictly sequential), and frontend now shows true network upload progress plus timing breakdown (prep/upload/import) in import details.
-- **In Progress:** None
-- **Next Prescribed Step:** Validate real-world batch upload speed in owner UI and issue Sprint 19 packet.
+- **Last Updated (PST):** 2026-02-26 10:40
+- **Current Dev Cycle:** Round 1 (Security Sprint 20)
+- **Current Status:** Implemented first-pass multi-user security architecture: bootstrap admin setup, login/logout/session cookies, auth-gated owner app and owner APIs, admin user management APIs, initial in-app user management UI, and public-share exception retained (`/app/share.html` + `/api/shares/*`).
+- **In Progress:** Security hardening phase 2 (CSRF protection, stricter cookie/session policy, audit logging, permission/role UX polish).
+- **Next Prescribed Step:** Execute Security Sprint 20.2 hardening tasks and complete deployment checklist for public server hosting.
 - **Open Blockers:** None
-- **Overall PRD Completion (estimate):** 99%
+- **Overall PRD Completion (estimate):** 92% (security hardening work now expanded scope)
 
 ### Project Snapshot (primary experience)
 - **Primary experience now:** Upload batch → explicit import → optional album creation (Day Taken / Day Imported / New Name) → browse library/albums → create protected share links.
@@ -54,6 +54,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 16:29 | Executor Agent | Design Agent | Sprint 18 Hotfix | Fixed bulk delete failures by adding `POST /api/library/assets/bulk-delete` and switching UI multi-delete to payload-based endpoint calls. Also fixed import UX confusion by writing live import log lines during run phases and using indeterminate progress during network upload to avoid misleading 100%-while-uploading state. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
 | 2026-02-25 16:31 | Executor Agent | Design Agent | Sprint 18 Regression Fix | Fixed frontend syntax regression in `app/index.html` that prevented script execution and broke tab navigation (including Library). Repaired `runImportFlow` string/template literals and revalidated Library tab navigation in-browser. | Continue with Sprint 19 packet planning. |
 | 2026-02-25 16:48 | Executor Agent | Design Agent | Sprint 18 Upload Performance Pass | Optimized upload path for perceived + actual speed: parallelized staging/import file processing with bounded concurrency in importer pipeline, added real network upload progress tracking via XHR upload events, and surfaced prep/upload/import timing metrics in Import details for diagnosis. Smoke UAT passed. | Run real-world validation with medium batches and tune concurrency if needed. |
+| 2026-02-26 10:40 | Executor Agent | Product Manager (Jon) | Security Sprint 20 (Phase 1) | Implemented core auth baseline for multi-user deployment: DB schema extended (`users`, `sessions`), password hashing (scrypt), bootstrap admin setup, login/logout/me endpoints, admin user create/password reset/role+disable endpoints, owner app route gating (`/app` redirects to `/app/login`), API auth middleware for non-public routes, and initial Settings UI for user management. Public share access preserved (`/app/share.html`, `/api/shares/*`). | Execute Security Sprint 20.2: CSRF defenses, stricter session rotation/expiration policy, auth event audit logs, and production deployment hardening verification. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

@@ -3,7 +3,8 @@ import cors from "cors";
 import multer from "multer";
 import fs from "node:fs";
 import path from "node:path";
-import { randomUUID } from "node:crypto";
+import { randomUUID, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
+import { promisify } from "node:util";
 import { paths, limits } from "./config.js";
 import { ensureDir } from "./lib/fs-utils.js";
 import { JsonStore } from "./lib/store.js";
@@ -34,6 +35,7 @@ import {
 
 const app = express();
 const port = Number(process.env.PORT || 8787);
+const scrypt = promisify(scryptCb);
 
 const store = new JsonStore(paths.dbPath);
 const shareRateLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 1200 });
@@ -144,6 +146,60 @@ function asBoolean(value, fallback = false) {
   return ["1", "true", "yes", "on"].includes(normalized);
 }
 
+function parseCookies(req) {
+  const raw = req.headers.cookie || "";
+  return raw.split(";").reduce((acc, part) => {
+    const [k, ...rest] = part.trim().split("=");
+    if (!k) return acc;
+    acc[k] = decodeURIComponent(rest.join("=") || "");
+    return acc;
+  }, {});
+}
+
+function cookieOptions(req) {
+  const forwarded = req.headers["x-forwarded-proto"];
+  const secure = process.env.NODE_ENV === "production" || forwarded === "https";
+  return `Path=/; HttpOnly; SameSite=Lax${secure ? "; Secure" : ""}`;
+}
+
+async function hashPassword(password) {
+  const salt = randomUUID().replaceAll("-", "");
+  const derived = await scrypt(password, salt, 64);
+  return `scrypt:${salt}:${Buffer.from(derived).toString("hex")}`;
+}
+
+async function verifyPassword(password, stored) {
+  if (!stored?.startsWith("scrypt:")) return false;
+  const [, salt, hashHex] = stored.split(":");
+  const derived = await scrypt(password, salt, 64);
+  const a = Buffer.from(hashHex, "hex");
+  const b = Buffer.from(derived);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+function sessionFromReq(req, db) {
+  const sid = parseCookies(req).alpha_session;
+  if (!sid) return null;
+  const session = db.sessions.find((s) => s.id === sid && !s.revokedAt && (!s.expiresAt || new Date(s.expiresAt) > new Date()));
+  if (!session) return null;
+  const user = db.users.find((u) => u.id === session.userId && !u.disabledAt);
+  if (!user) return null;
+  return { session, user };
+}
+
+async function requireAuth(req, res, next) {
+  const db = await store.read();
+  const current = sessionFromReq(req, db);
+  if (!current) return res.status(401).json({ error: "Authentication required" });
+  req.auth = current;
+  return next();
+}
+
+function requireAdmin(req, res, next) {
+  if (req.auth?.user?.role !== "admin") return res.status(403).json({ error: "Admin required" });
+  return next();
+}
+
 async function runDerivativeWorkerTick() {
   if (jobWorkerRunning) {
     return { skipped: true, reason: "worker_already_running" };
@@ -190,23 +246,30 @@ const upload = multer({ dest: paths.tempUploads });
 
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
-app.use("/app", express.static(path.join(paths.root, "app")));
-app.use("/uat", express.static(path.join(paths.root, "app")));
 app.use("/docs", express.static(path.join(paths.root, "docs")));
 
 app.get("/", (_req, res) => res.redirect("/app"));
-app.get("/app", (_req, res) => {
+
+app.get("/app/login", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  return res.sendFile(path.join(paths.root, "app", "login.html"));
+});
+
+app.get("/app/share.html", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  return res.sendFile(path.join(paths.root, "app", "share.html"));
+});
+
+async function serveOwnerApp(req, res) {
+  const db = await store.read();
+  if (!sessionFromReq(req, db)) return res.redirect("/app/login");
   res.setHeader("Cache-Control", "no-store");
   return res.sendFile(path.join(paths.root, "app", "index.html"));
-});
-app.get("/app/index.html", (_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  return res.sendFile(path.join(paths.root, "app", "index.html"));
-});
-app.get("/uat", (_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  return res.sendFile(path.join(paths.root, "app", "index.html"));
-});
+}
+
+app.get("/app", serveOwnerApp);
+app.get("/app/index.html", serveOwnerApp);
+app.get("/uat", serveOwnerApp);
 
 app.get("/api/health", async (_req, res) => {
   const db = await store.read();
@@ -221,8 +284,157 @@ app.get("/api/health", async (_req, res) => {
       derivatives: db.derivatives.length,
       derivativeJobs: db.derivativeJobs.length,
       shares: db.shares.length,
+      users: db.users.length,
     },
   });
+});
+
+app.get("/api/auth/bootstrap-status", async (_req, res) => {
+  const db = await store.read();
+  return res.json({ needsSetup: db.users.length === 0 });
+});
+
+app.post("/api/auth/setup", async (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "");
+  if (!username || password.length < 8) return res.status(400).json({ error: "username and password(>=8) required" });
+
+  try {
+    const result = await store.update(async (db) => {
+      if (db.users.length > 0) throw new Error("Setup already completed");
+      const user = {
+        id: randomUUID(),
+        username,
+        role: "admin",
+        passwordHash: await hashPassword(password),
+        createdAt: new Date().toISOString(),
+        disabledAt: null,
+      };
+      db.users.push(user);
+      const session = {
+        id: randomUUID(),
+        userId: user.id,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(),
+        revokedAt: null,
+      };
+      db.sessions.push(session);
+      return { user, sessionId: session.id };
+    });
+    res.setHeader("Set-Cookie", `alpha_session=${encodeURIComponent(result.sessionId)}; ${cookieOptions(req)}`);
+    return res.status(201).json({ ok: true, user: { id: result.user.id, username: result.user.username, role: result.user.role } });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/api/auth/login", async (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "");
+  const db = await store.read();
+  const user = db.users.find((u) => u.username === username && !u.disabledAt);
+  if (!user) return res.status(401).json({ error: "Invalid credentials" });
+  if (!(await verifyPassword(password, user.passwordHash))) return res.status(401).json({ error: "Invalid credentials" });
+
+  const session = await store.update((wdb) => {
+    const s = {
+      id: randomUUID(),
+      userId: user.id,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30).toISOString(),
+      revokedAt: null,
+    };
+    wdb.sessions.push(s);
+    return s;
+  });
+
+  res.setHeader("Set-Cookie", `alpha_session=${encodeURIComponent(session.id)}; ${cookieOptions(req)}`);
+  return res.json({ ok: true, user: { id: user.id, username: user.username, role: user.role } });
+});
+
+app.post("/api/auth/logout", requireAuth, async (req, res) => {
+  const sid = req.auth.session.id;
+  await store.update((db) => {
+    const s = db.sessions.find((x) => x.id === sid);
+    if (s) s.revokedAt = new Date().toISOString();
+    return null;
+  });
+  res.setHeader("Set-Cookie", `alpha_session=; ${cookieOptions(req)}; Max-Age=0`);
+  return res.json({ ok: true });
+});
+
+app.get("/api/auth/me", requireAuth, async (req, res) => {
+  return res.json({ user: { id: req.auth.user.id, username: req.auth.user.username, role: req.auth.user.role } });
+});
+
+app.get("/api/admin/users", requireAuth, requireAdmin, async (_req, res) => {
+  const db = await store.read();
+  return res.json({
+    items: db.users.map((u) => ({ id: u.id, username: u.username, role: u.role, disabledAt: u.disabledAt, createdAt: u.createdAt })),
+  });
+});
+
+app.post("/api/admin/users", requireAuth, requireAdmin, async (req, res) => {
+  const username = String(req.body?.username || "").trim();
+  const password = String(req.body?.password || "");
+  const role = req.body?.role === "admin" ? "admin" : "user";
+  if (!username || password.length < 8) return res.status(400).json({ error: "username and password(>=8) required" });
+
+  try {
+    const created = await store.update(async (db) => {
+      if (db.users.some((u) => u.username === username)) throw new Error("Username already exists");
+      const user = {
+        id: randomUUID(),
+        username,
+        role,
+        passwordHash: await hashPassword(password),
+        createdAt: new Date().toISOString(),
+        disabledAt: null,
+      };
+      db.users.push(user);
+      return { id: user.id, username: user.username, role: user.role, createdAt: user.createdAt, disabledAt: null };
+    });
+    return res.status(201).json(created);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.patch("/api/admin/users/:userId/password", requireAuth, requireAdmin, async (req, res) => {
+  const password = String(req.body?.password || "");
+  if (password.length < 8) return res.status(400).json({ error: "password must be >= 8 chars" });
+  try {
+    await store.update(async (db) => {
+      const user = db.users.find((u) => u.id === req.params.userId);
+      if (!user) throw new Error("User not found");
+      user.passwordHash = await hashPassword(password);
+      return null;
+    });
+    return res.json({ ok: true });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.patch("/api/admin/users/:userId", requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const updated = await store.update((db) => {
+      const user = db.users.find((u) => u.id === req.params.userId);
+      if (!user) throw new Error("User not found");
+      if (req.body?.role) user.role = req.body.role === "admin" ? "admin" : "user";
+      if (req.body?.disabled !== undefined) user.disabledAt = req.body.disabled ? new Date().toISOString() : null;
+      return { id: user.id, username: user.username, role: user.role, disabledAt: user.disabledAt };
+    });
+    return res.json(updated);
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.use("/api", (req, res, next) => {
+  const open = ["/health", "/auth/bootstrap-status", "/auth/setup", "/auth/login", "/shares"];
+  if (open.some((p) => req.path === p || req.path.startsWith(`${p}/`))) return next();
+  return requireAuth(req, res, next);
 });
 
 app.get("/api/owner/settings", async (_req, res) => {

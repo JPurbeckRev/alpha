@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AlphaVision Login</title>
+  <style>
+    body { margin:0; font-family: Inter, Segoe UI, sans-serif; background:#0d1424; color:#e8efff; display:grid; place-items:center; min-height:100vh; }
+    .card { width:min(420px, calc(100vw - 32px)); border:1px solid #2e3e69; border-radius:14px; background:#121d36; padding:20px; }
+    input, button, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2e3e69; background:#0f1930; color:#e8efff; margin-top:10px; }
+    button { cursor:pointer; font-weight:600; }
+    .muted { color:#aebcde; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2 style="margin:0 0 8px;">AlphaVision</h2>
+    <div class="muted" id="modeText">Sign in</div>
+    <input id="username" placeholder="Username" autocomplete="username" />
+    <input id="password" placeholder="Password" type="password" autocomplete="current-password" />
+    <button id="submitBtn">Sign in</button>
+    <div id="out" class="muted" style="margin-top:10px;"></div>
+  </div>
+  <script>
+    async function api(url, options={}) {
+      const res = await fetch(url, { headers:{'Content-Type':'application/json'}, ...options });
+      const body = await res.json().catch(()=>({}));
+      if(!res.ok) throw new Error(body.error || 'Request failed');
+      return body;
+    }
+
+    async function init() {
+      const status = await api('/api/auth/bootstrap-status');
+      const setup = status.needsSetup;
+      document.getElementById('modeText').textContent = setup ? 'Create initial admin account' : 'Sign in';
+      document.getElementById('submitBtn').textContent = setup ? 'Create admin + sign in' : 'Sign in';
+      document.getElementById('submitBtn').onclick = async () => {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        try {
+          if (setup) await api('/api/auth/setup', { method:'POST', body: JSON.stringify({ username, password }) });
+          else await api('/api/auth/login', { method:'POST', body: JSON.stringify({ username, password }) });
+          location.href = '/app';
+        } catch (e) {
+          document.getElementById('out').textContent = e.message;
+        }
+      }
+    }
+    init();
+  </script>
+</body>
+</html>

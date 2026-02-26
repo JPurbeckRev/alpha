@@ -730,6 +730,19 @@
             </div>
             <div id="m5Status" class="mini muted" style="margin-top: 8px;"></div>
           </div>
+
+          <div class="home-card span-12" style="margin-top: 12px;">
+            <div><strong>User Security</strong></div>
+            <div class="muted mini" style="margin: 8px 0 16px;">Create users, set roles, and reset passwords.</div>
+            <div class="row">
+              <input id="newUserName" placeholder="Username" />
+              <input id="newUserPassword" placeholder="Temp password (8+ chars)" type="password" />
+              <select id="newUserRole"><option value="user">User</option><option value="admin">Admin</option></select>
+              <button id="createUserBtn">Create User</button>
+            </div>
+            <div id="userList" class="list"></div>
+            <div id="userStatus" class="mini muted" style="margin-top:8px;"></div>
+          </div>
         </div>
       </section>
     </div>
@@ -1393,6 +1406,34 @@
         } catch (err) {}
       }
 
+      async function loadUsers() {
+        try {
+          const out = await api('/api/admin/users');
+          $('userList').innerHTML = out.items.map((u) => `
+            <div class="list-item row" style="justify-content:space-between;">
+              <div><strong>${esc(u.username)}</strong> <span class="pill">${esc(u.role)}</span> ${u.disabledAt ? '<span class="pill">disabled</span>' : ''}</div>
+              <div class="row" style="margin:0;">
+                <input data-user-pass="${u.id}" type="password" placeholder="New password" style="min-width:160px;" />
+                <button data-reset-pass="${u.id}">Set Password</button>
+              </div>
+            </div>
+          `).join('') || '<div class="muted mini">No users.</div>';
+
+          document.querySelectorAll('[data-reset-pass]').forEach((btn) => {
+            btn.onclick = async () => {
+              const input = document.querySelector(`[data-user-pass="${btn.dataset.resetPass}"]`);
+              const password = input?.value || '';
+              if (password.length < 8) return $('userStatus').textContent = 'Password must be at least 8 characters.';
+              await api(`/api/admin/users/${btn.dataset.resetPass}/password`, { method:'PATCH', body: JSON.stringify({ password }) });
+              $('userStatus').textContent = 'Password updated.';
+              if (input) input.value = '';
+            };
+          });
+        } catch (err) {
+          $('userList').innerHTML = '<div class="muted mini">Admin access required to manage users.</div>';
+        }
+      }
+
       $('homeStartImportBtn').onclick = () => setTab('import');
       $('homeOpenTimelineBtn').onclick = () => { setTab('library'); refreshLibrary(); };
       $('homeOpenImportTabBtn').onclick = () => setTab('import');
@@ -1473,7 +1514,26 @@
       $('resetFailedJobsBtn').onclick = async () => { if(!confirm('Reset failed?')) return; await api('/api/jobs/derivatives/reset-failed', { method: 'POST' }); $('m5Status').textContent='Reset complete.'; refreshStats(); };
       $('refreshStatsBtn').onclick = async () => { await refreshStats(); $('m5Status').textContent='Stats refreshed.'; };
 
-      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshHomeExperience(), loadSettings()]);
+      $('createUserBtn').onclick = async () => {
+        try {
+          await api('/api/admin/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              username: $('newUserName').value.trim(),
+              password: $('newUserPassword').value,
+              role: $('newUserRole').value,
+            }),
+          });
+          $('newUserName').value = '';
+          $('newUserPassword').value = '';
+          $('userStatus').textContent = 'User created.';
+          await loadUsers();
+        } catch (err) {
+          $('userStatus').textContent = `Create failed: ${err.message}`;
+        }
+      };
+
+      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshHomeExperience(), loadSettings(), loadUsers()]);
     </script>
   
     <div id="lightbox" class="lightbox">
