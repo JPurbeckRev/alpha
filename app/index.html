@@ -613,6 +613,7 @@
               <input id="renameAlbumName" placeholder="Rename selected album" />
               <button id="renameAlbumBtn">Rename</button>
               <button class="danger" id="deleteAlbumBtn">Delete</button>
+              <span id="albumActionStatus" class="mini muted"></span>
             </div>
             <div id="albumAssets" class="cards" style="margin-top: 12px;"></div>
           </div>
@@ -1192,35 +1193,41 @@
       $('deleteAlbumBtn').onclick = async () => {
         const picker = $('selectedAlbumPicker');
         const btn = $('deleteAlbumBtn');
+        const status = $('albumActionStatus');
         const albumId = picker.value?.trim();
         if (!albumId) {
-          btn.textContent = 'Select album first';
-          setTimeout(() => { btn.textContent = 'Delete'; }, 1200);
+          status.textContent = 'Select an album, then click Delete.';
           return;
         }
 
         const now = Date.now();
         if (now > albumDeleteConfirmUntil) {
           const albumName = picker.options[picker.selectedIndex]?.text || 'selected album';
-          btn.textContent = `Confirm delete: ${albumName}`;
+          btn.textContent = 'Click again to confirm';
+          status.textContent = `Confirm delete for "${albumName}" within 6 seconds.`;
           albumDeleteConfirmUntil = now + 6000;
           setTimeout(() => {
-            if (Date.now() > albumDeleteConfirmUntil) btn.textContent = 'Delete';
+            if (Date.now() > albumDeleteConfirmUntil) {
+              btn.textContent = 'Delete';
+              status.textContent = '';
+            }
           }, 6200);
           return;
         }
 
         try {
           btn.disabled = true;
+          status.textContent = 'Deleting album...';
           await api(`/api/albums/${albumId}`, { method: 'DELETE' });
           picker.value = '';
           $('albumAssets').innerHTML = '';
           albumDeleteConfirmUntil = 0;
           btn.textContent = 'Delete';
+          status.textContent = 'Album deleted.';
           await Promise.all([refreshAlbums(), refreshHomeExperience(), refreshShares(), refreshStats()]);
         } catch (err) {
-          btn.textContent = 'Delete failed';
-          setTimeout(() => { btn.textContent = 'Delete'; }, 1400);
+          status.textContent = `Delete failed: ${err.message}`;
+          btn.textContent = 'Delete';
         } finally {
           btn.disabled = false;
         }
