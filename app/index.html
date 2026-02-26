@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Alpha — Owner Experience</title>
+    <title>AlphaVision — Personal Media Hub</title>
     <style>
       :root {
         --bg: #0d1424;
@@ -139,7 +139,20 @@
         align-items: center;
         gap: 16px;
       }
-      .title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+      .title { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; display:flex; align-items:center; gap:10px; }
+      .brand-mark {
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        width:28px;
+        height:28px;
+        border-radius:8px;
+        background: linear-gradient(135deg, #8ab4ff, #6f8cff 55%, #9f7bff);
+        color:#07101f;
+        font-size:0.82rem;
+        font-weight:900;
+        box-shadow: 0 6px 16px rgba(111, 140, 255, 0.35);
+      }
       .muted { color: var(--muted); }
       .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; padding-bottom: 120px; }
 
@@ -507,8 +520,8 @@
     <header>
       <div class="header-inner">
         <div>
-          <div class="title">Alpha — Owner Site</div>
-          <div class="muted mini" style="margin-top:2px;">Import, relive, and share your moments.</div>
+          <div class="title"><span class="brand-mark">AV</span> AlphaVision</div>
+          <div class="muted mini" style="margin-top:2px;">Your personal media hub — import, relive, and share your moments.</div>
         </div>
         <div id="healthBadge" class="muted mini">Checking health…</div>
       </div>
