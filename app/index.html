@@ -357,6 +357,22 @@
       @keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 
       .list { display: grid; gap: 12px; }
+
+      .upload-jobs-dock {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        width: min(420px, calc(100vw - 32px));
+        max-height: 45vh;
+        overflow: auto;
+        z-index: 120;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: var(--panel-2);
+        box-shadow: 0 16px 34px rgba(0,0,0,0.35);
+        padding: 10px;
+      }
+      .upload-job { border:1px solid var(--line); border-radius:10px; padding:8px; margin-bottom:8px; }
       .list-item {
         border: 1px solid var(--line);
         border-radius: 14px;
@@ -718,6 +734,8 @@
       </section>
     </div>
 
+    <div id="uploadJobsDock" class="upload-jobs-dock hidden"></div>
+
     <script>
       
       let lbZoom = 1;
@@ -780,6 +798,7 @@
         selectedLibraryAssets: new Set(),
         pendingDeleteAssetIds: new Set(),
         lightboxSequence: [],
+        uploadJobs: [],
       };
 
       function $(id) { return document.getElementById(id); }
@@ -822,11 +841,17 @@
         }
       }
 
-      function uploadBatchWithProgress(formData, onProgress) {
+      function uploadBatchWithProgress(formData, onProgress, signal) {
         return new Promise((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open('POST', '/api/staging/upload');
           xhr.responseType = 'json';
+          if (signal) {
+            signal.addEventListener('abort', () => {
+              try { xhr.abort(); } catch {}
+              reject(new DOMException('Upload canceled', 'AbortError'));
+            }, { once: true });
+          }
           xhr.upload.onprogress = (evt) => {
             if (!evt.lengthComputable || !onProgress) return;
             onProgress(evt.loaded, evt.total);
@@ -836,7 +861,7 @@
             if (xhr.status >= 200 && xhr.status < 300) resolve(body);
             else reject(new Error(body?.error || `Upload failed (${xhr.status}): ${JSON.stringify(body).substring(0, 100)}`));
           };
-          xhr.onerror = (e) => reject(new Error(`Network error during upload. The server may have closed the connection or timed out. Check if file size is too large or server is down.`));
+          xhr.onerror = () => reject(new Error('Network error during upload.'));
           xhr.send(formData);
         });
       }
@@ -847,9 +872,44 @@
         $('importOut').textContent = `${current}\n[${stamp}] ${line}`.trim();
       }
 
+      function renderUploadJobsDock() {
+        const dock = $('uploadJobsDock');
+        const jobs = state.uploadJobs.filter(j => j.status !== 'done' && j.status !== 'failed' && j.status !== 'canceled');
+        if (!jobs.length) {
+          dock.classList.add('hidden');
+          dock.innerHTML = '';
+          return;
+        }
+        dock.classList.remove('hidden');
+        dock.innerHTML = jobs.map(j => `
+          <div class="upload-job">
+            <div class="mini"><strong>${esc(j.name)}</strong> · ${esc(j.status)}</div>
+            <div class="mini muted">${esc(j.detail || '')}</div>
+            <progress max="100" value="${j.progress || 0}" style="width:100%;height:6px;margin-top:6px;"></progress>
+            <div class="row" style="margin-top:6px;margin-bottom:0;">
+              <button data-cancel-upload-job="${j.id}" class="danger">Cancel</button>
+            </div>
+          </div>
+        `).join('');
+        document.querySelectorAll('[data-cancel-upload-job]').forEach(btn => {
+          btn.onclick = () => {
+            const job = state.uploadJobs.find(j => j.id === btn.dataset.cancelUploadJob);
+            if (job?.cancel) job.cancel();
+          };
+        });
+      }
+
+      function updateUploadJob(id, patch) {
+        const job = state.uploadJobs.find(j => j.id === id);
+        if (!job) return;
+        Object.assign(job, patch);
+        renderUploadJobsDock();
+      }
+
       async function api(url, options = {}) {
         const res = await fetch(url, {
           headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+          signal: options.signal,
           ...options,
         });
         const text = await res.text();
@@ -1053,16 +1113,26 @@
       }
 
       async function runImportFlow() {
-        const files = $('importFiles').files;
+        const files = Array.from($('importFiles').files || []);
         if (!files.length) return $('importOut').textContent = 'Select files first.';
 
-        const runBtn = $('runImportBtn');
+        const jobId = crypto.randomUUID();
+        const ctrl = new AbortController();
+        const job = {
+          id: jobId,
+          name: `${files.length} file${files.length === 1 ? '' : 's'}`,
+          status: 'queued',
+          progress: 0,
+          detail: 'Queued',
+          cancel: () => ctrl.abort(),
+        };
+        state.uploadJobs.push(job);
+        renderUploadJobsDock();
+
         const progress = $('importPrepProgress');
         const status = $('importPrepStatus');
-        runBtn.disabled = true;
         progress.style.display = 'block'; progress.value = 0;
-        $('importOut').textContent = '';
-        status.textContent = `Preparing ${files.length} files...`;
+        status.textContent = `Started job ${jobId.slice(0, 8)}...`;
 
         const fd = new FormData();
         let lastPaint = 0;
@@ -1070,36 +1140,41 @@
           const now = performance.now();
           if (c !== total && now - lastPaint < 80) return;
           lastPaint = now;
-          progress.value = Math.round((c / total) * 100);
-          status.textContent = `Preparing... ${c}/${total} files`;
+          const p = Math.round((c / total) * 100);
+          progress.value = p;
+          updateUploadJob(jobId, { status: 'preparing', progress: p, detail: `${c}/${total} files` });
         };
         const onUploadProgress = (l, t) => {
           const now = performance.now();
           if (now - lastPaint < 80) return;
           lastPaint = now;
-          progress.value = t ? Math.round((l / t) * 100) : 0;
-          status.textContent = `Uploading... ${progress.value}%`;
+          const p = t ? Math.round((l / t) * 100) : 0;
+          progress.value = p;
+          updateUploadJob(jobId, { status: 'uploading', progress: p, detail: `${p}%` });
         };
 
         try {
           await appendFilesInBatches(fd, files, onPrepProgress);
-          progress.value = 0; status.textContent = `Uploading... 0%`;
-          const upload = await uploadBatchWithProgress(fd, onUploadProgress);
-          status.textContent = 'Processing import...';
+          const upload = await uploadBatchWithProgress(fd, onUploadProgress, ctrl.signal);
+          updateUploadJob(jobId, { status: 'importing', progress: 100, detail: 'Processing import...' });
           const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
             method: 'POST',
+            signal: ctrl.signal,
             body: JSON.stringify({ createAlbums: true, rule: $('importRule').value, albumName: $('importAlbumName').value || null }),
           });
           $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
           renderImportResultPanel(upload, importLog);
+          updateUploadJob(jobId, { status: 'done', detail: `Complete: ${importLog.counts.logicalAssetsCreated} assets` });
           status.textContent = `Import complete!`;
           await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
         } catch (error) {
-          $('importOut').textContent = `Error: ${error.message}`;
-          status.textContent = `Failed: ${error.message}`;
+          const canceled = error?.name === 'AbortError';
+          $('importOut').textContent = canceled ? 'Canceled by user.' : `Error: ${error.message}`;
+          status.textContent = canceled ? 'Canceled.' : `Failed: ${error.message}`;
+          updateUploadJob(jobId, { status: canceled ? 'canceled' : 'failed', detail: canceled ? 'Canceled by user' : (error.message || 'Failed') });
         } finally {
-          runBtn.disabled = false;
           setTimeout(() => { progress.style.display = 'none'; }, 1000);
+          renderUploadJobsDock();
         }
       }
 
