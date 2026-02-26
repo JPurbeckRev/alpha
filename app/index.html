@@ -1197,14 +1197,8 @@
         }
 
         const albumName = picker.options[picker.selectedIndex]?.text || 'this album';
-        const firstConfirm = confirm(`Delete album "${albumName}"?\n\nThis removes the album container only (assets stay in your library).`);
-        if (!firstConfirm) return;
-
-        const typed = prompt(`Type DELETE to confirm removing "${albumName}".`);
-        if (typed !== 'DELETE') {
-          alert('Album deletion canceled.');
-          return;
-        }
+        const confirmed = confirm(`Are you sure you want to delete album "${albumName}"?\n\nThis only removes the album container. Assets stay in your library.`);
+        if (!confirmed) return;
 
         try {
           await api(`/api/albums/${albumId}`, { method: 'DELETE' });
