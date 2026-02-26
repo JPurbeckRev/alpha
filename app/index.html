@@ -732,7 +732,7 @@
       const state = {
         albums: [],
         selectedLibraryAssets: new Set(),
-        pendingDeleteAssetId: null,
+        pendingDeleteAssetIds: new Set(),
       };
 
       function $(id) { return document.getElementById(id); }
@@ -867,18 +867,19 @@
         const isVideo = asset.type === "video";
         const isFeature = (index % 7 === 0);
         const selected = state.selectedLibraryAssets.has(asset.id);
+        const queuedDelete = state.pendingDeleteAssetIds.has(asset.id);
         const media = isVideo
           ? `<video src="${getMediaUrl(asset)}" controls muted preload="metadata"></video>`
           : `<img src="${getMediaUrl(asset)}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
 
         return `
-          <div class="card ${isFeature ? 'feature' : ''} ${selected ? 'selected' : ''}" data-library-card="${asset.id}">
+          <div class="card ${isFeature ? 'feature' : ''} ${selected ? 'selected' : ''}" data-library-card="${asset.id}" style="${queuedDelete ? 'outline:2px solid var(--danger);' : ''}">
             <div class="library-card-actions">
               <label class="select-chip" title="Select item">
                 <input type="checkbox" data-select-asset="${asset.id}" ${selected ? 'checked' : ''} />
                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
               </label>
-              <button data-delete-asset="${asset.id}" class="icon-btn" title="Delete forever">
+              <button data-delete-asset="${asset.id}" class="icon-btn" title="${queuedDelete ? 'Remove from delete queue' : 'Queue for deletion'}">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
               </button>
             </div>
@@ -906,14 +907,15 @@
       }
 
       function renderSingleDeletePrompt() {
-        if (!state.pendingDeleteAssetId) return '';
+        const count = state.pendingDeleteAssetIds.size;
+        if (!count) return '';
         return `
           <div class="list-item" id="singleDeletePrompt" style="margin-bottom:12px; border-color: var(--danger);">
             <div class="row" style="justify-content:space-between; align-items:center; margin:0;">
-              <div><strong>Delete this item?</strong> <span class="muted mini">This cannot be undone.</span></div>
+              <div><strong>${count} item${count === 1 ? '' : 's'} queued for deletion</strong> <span class="muted mini">Review complete, then confirm delete all.</span></div>
               <div class="row" style="margin:0;">
-                <button id="cancelSingleDeleteBtn">Cancel</button>
-                <button class="danger" id="confirmSingleDeleteBtn">Delete Item</button>
+                <button id="cancelSingleDeleteBtn">Clear Queue</button>
+                <button class="danger" id="confirmSingleDeleteBtn">Delete All Queued</button>
               </div>
             </div>
           </div>
@@ -1095,26 +1097,28 @@
           document.querySelectorAll('[data-delete-asset]').forEach(btn => {
             btn.onclick = async (e) => {
               e.preventDefault();
-              state.pendingDeleteAssetId = btn.dataset.deleteAsset;
+              const assetId = btn.dataset.deleteAsset;
+              if (state.pendingDeleteAssetIds.has(assetId)) state.pendingDeleteAssetIds.delete(assetId);
+              else state.pendingDeleteAssetIds.add(assetId);
               refreshLibrary();
             };
           });
 
           if ($('cancelSingleDeleteBtn')) {
             $('cancelSingleDeleteBtn').onclick = () => {
-              state.pendingDeleteAssetId = null;
+              state.pendingDeleteAssetIds.clear();
               refreshLibrary();
             };
           }
 
           if ($('confirmSingleDeleteBtn')) {
             $('confirmSingleDeleteBtn').onclick = async () => {
-              const assetId = state.pendingDeleteAssetId;
-              if (!assetId) return;
+              const ids = Array.from(state.pendingDeleteAssetIds);
+              if (!ids.length) return;
               try {
-                await api(`/api/library/assets/${assetId}`, { method: 'DELETE' });
-                state.selectedLibraryAssets.delete(assetId);
-                state.pendingDeleteAssetId = null;
+                await api('/api/library/assets/bulk-delete', { method: 'POST', body: JSON.stringify({ assetIds: ids }) });
+                ids.forEach((id) => state.selectedLibraryAssets.delete(id));
+                state.pendingDeleteAssetIds.clear();
                 await Promise.all([refreshLibrary(), refreshStats(), refreshHomeExperience()]);
               } catch (err) {
                 alert(`Delete failed: ${err.message}`);
