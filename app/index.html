@@ -821,6 +821,10 @@
         lightboxSequence: [],
         uploadJobs: [],
         uploadDockCollapsed: false,
+        libraryPage: 1,
+        libraryHasMore: false,
+        loadedTabs: { home: false, import: true, library: false, albums: false, sharing: false, settings: false },
+        libraryGroups: [],
       };
 
       function $(id) { return document.getElementById(id); }
@@ -981,11 +985,21 @@
         return body;
       }
 
-      function setTab(tab) {
+      async function setTab(tab) {
         document.querySelectorAll(".tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
         ["home", "import", "library", "albums", "sharing", "settings"].forEach((name) => {
           $(`tab-${name}`).classList.toggle("hidden", name !== tab);
         });
+
+        if (!state.loadedTabs[tab]) {
+          if (tab === 'home') await Promise.all([refreshStats(), refreshHomeExperience()]);
+          if (tab === 'library') await refreshLibrary(true);
+          if (tab === 'albums') await refreshAlbums();
+          if (tab === 'sharing') await refreshShares();
+          if (tab === 'settings') await loadSettings();
+          state.loadedTabs[tab] = true;
+        }
+
         window.scrollTo(0,0);
       }
 
@@ -1251,28 +1265,34 @@
         await startUploadJob({ files, rule: effectiveRule, albumName: typedAlbumName || null });
       }
 
-      async function refreshLibrary() {
+      async function refreshLibrary(reset = true) {
         try {
-          const timeline = await api(`/api/library/timeline?groupBy=${encodeURIComponent($('libGroupBy').value)}&type=${encodeURIComponent($('libType').value)}`);
+          if (reset) state.libraryPage = 1;
+          const timeline = await api(`/api/library/timeline?groupBy=${encodeURIComponent($('libGroupBy').value)}&type=${encodeURIComponent($('libType').value)}&page=${state.libraryPage}&pageSize=8`);
+          state.libraryHasMore = (timeline.pagination?.page || 1) < (timeline.pagination?.pages || 1);
           const search = $('libSearch').value.trim().toLowerCase();
           const filtered = search
             ? timeline.items.map(g => ({ ...g, assets: g.assets.filter(a => a.fileNames?.some(n => n.toLowerCase().includes(search))) })).filter(g => g.assets.length)
             : timeline.items;
 
-          state.lightboxSequence = filtered.flatMap(g => g.assets.map(a => ({ id: a.id, url: getPreviewUrl(a), type: a.type })));
+          if (reset) state.libraryGroups = [];
+          state.libraryGroups = [...state.libraryGroups, ...filtered];
 
-          const vis = new Set(filtered.flatMap(g => g.assets.map(a => a.id)));
+          state.lightboxSequence = state.libraryGroups.flatMap(g => g.assets.map(a => ({ id: a.id, url: getPreviewUrl(a), type: a.type })));
+
+          const vis = new Set(state.libraryGroups.flatMap(g => g.assets.map(a => a.id)));
           state.selectedLibraryAssets.forEach(id => { if (!vis.has(id)) state.selectedLibraryAssets.delete(id); });
 
-          const html = filtered.map(g => `
+          const html = state.libraryGroups.map(g => `
             <div class="list-item" style="border:none; padding:0; background:transparent;">
               <h3 style="margin: 0 0 12px; font-size:1.1rem;">${esc(g.day)} <span class="muted" style="font-weight:400; font-size:0.9rem;">(${g.assets.length})</span></h3>
               <div class="cards">${g.assets.map((a, i) => libraryMediaCard(a, i)).join('')}</div>
             </div>
           `).join('');
 
+          const loadMore = state.libraryHasMore ? `<div class="row" style="justify-content:center;"><button id="loadMoreLibraryBtn">Load More</button></div>` : '';
           $('timelineContainer').innerHTML = html
-            ? `${renderSingleDeletePrompt()}${html}${renderBulkActionBar()}`
+            ? `${renderSingleDeletePrompt()}${html}${loadMore}${renderBulkActionBar()}`
             : emptyState('Library is empty', 'Nothing to show here.', 'Import Photos', 'import', 'libEmptyBtn');
           bindEmptyStateCtas();
 
@@ -1316,6 +1336,7 @@
           }
 
           if ($('clearLibrarySelectionBtn')) $('clearLibrarySelectionBtn').onclick = () => { state.selectedLibraryAssets.clear(); refreshLibrary(); };
+          if ($('loadMoreLibraryBtn')) $('loadMoreLibraryBtn').onclick = async () => { state.libraryPage += 1; await refreshLibrary(false); };
           if ($('deleteSelectedLibraryBtn')) $('deleteSelectedLibraryBtn').onclick = async () => {
             const ids = Array.from(state.selectedLibraryAssets);
             if (!ids.length || !confirm(`Permanently delete ${ids.length} selected items?`)) return;
@@ -1546,7 +1567,8 @@
         }
       };
 
-      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshHomeExperience(), loadSettings(), loadUsers()]);
+      Promise.all([refreshStats(), refreshHomeExperience(), loadSettings(), loadUsers()]);
+      state.loadedTabs.home = true;
     </script>
   
     <div id="lightbox" class="lightbox">

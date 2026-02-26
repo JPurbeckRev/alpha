@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import compression from "compression";
 import multer from "multer";
 import fs from "node:fs";
 import path from "node:path";
@@ -275,6 +276,7 @@ async function bootstrap() {
 const upload = multer({ dest: paths.tempUploads });
 
 app.use(cors());
+app.use(compression());
 app.use(express.json({ limit: "10mb" }));
 app.use("/docs", express.static(path.join(paths.root, "docs")));
 
