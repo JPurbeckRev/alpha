@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import multer from "multer";
+import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { paths, limits } from "./config.js";
@@ -60,6 +61,9 @@ function ext(name = "") {
 function sourceMime(name = "") {
   const e = ext(name);
   if (e === ".jpg" || e === ".jpeg") return "image/jpeg";
+  if (e === ".png") return "image/png";
+  if (e === ".webp") return "image/webp";
+  if (e === ".gif") return "image/gif";
   if (e === ".mp4") return "video/mp4";
   if (e === ".mts") return "video/mp2t";
   if (e === ".arw") return "image/x-sony-arw";
@@ -69,6 +73,15 @@ function sourceMime(name = "") {
 function pickOwnerPreviewSource(sourceFiles = []) {
   const jpeg = sourceFiles.find((sf) => [".jpg", ".jpeg"].includes(ext(sf.originalName)));
   if (jpeg) return jpeg;
+
+  const png = sourceFiles.find((sf) => ext(sf.originalName) === ".png");
+  if (png) return png;
+
+  const webp = sourceFiles.find((sf) => ext(sf.originalName) === ".webp");
+  if (webp) return webp;
+
+  const gif = sourceFiles.find((sf) => ext(sf.originalName) === ".gif");
+  if (gif) return gif;
 
   const mp4 = sourceFiles.find((sf) => ext(sf.originalName) === ".mp4");
   if (mp4) return mp4;
@@ -108,15 +121,19 @@ function scrubAsset(asset) {
 }
 
 function sendFileSafe(res, filePath, { notFoundMessage = "File not found" } = {}) {
-  return res.sendFile(filePath, (error) => {
-    if (!error) return;
-    if (res.headersSent) return;
+  const normalizedPath = path.resolve(filePath);
 
-    if (error?.statusCode === 404 || error?.code === "ENOENT") {
-      return res.status(404).json({ error: notFoundMessage });
+  fs.access(normalizedPath, fs.constants.R_OK, (accessError) => {
+    if (accessError) {
+      if (!res.headersSent) res.status(404).json({ error: notFoundMessage });
+      return;
     }
 
-    return res.status(500).json({ error: "Failed to read file" });
+    const stream = fs.createReadStream(normalizedPath);
+    stream.on("error", () => {
+      if (!res.headersSent) res.status(500).json({ error: "Failed to read file" });
+    });
+    stream.pipe(res);
   });
 }
 

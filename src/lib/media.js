@@ -2,6 +2,7 @@ import path from "node:path";
 
 const RAW_EXTENSIONS = new Set([".arw"]);
 const JPEG_EXTENSIONS = new Set([".jpg", ".jpeg"]);
+const WEB_PHOTO_EXTENSIONS = new Set([".png", ".webp", ".gif"]);
 const VIDEO_EXTENSIONS = new Set([".mp4", ".mts"]);
 
 export function extensionOf(fileName = "") {
@@ -9,7 +10,7 @@ export function extensionOf(fileName = "") {
 }
 
 export function mediaKindFromExtension(ext = "") {
-  if (RAW_EXTENSIONS.has(ext) || JPEG_EXTENSIONS.has(ext)) return "photo";
+  if (RAW_EXTENSIONS.has(ext) || JPEG_EXTENSIONS.has(ext) || WEB_PHOTO_EXTENSIONS.has(ext)) return "photo";
   if (VIDEO_EXTENSIONS.has(ext)) return "video";
   return "unknown";
 }
@@ -33,6 +34,12 @@ export function formatKey(ext = "") {
     case ".jpg":
     case ".jpeg":
       return "JPEG";
+    case ".png":
+      return "PNG";
+    case ".webp":
+      return "WEBP";
+    case ".gif":
+      return "GIF";
     case ".mp4":
       return "MP4";
     case ".mts":
@@ -45,6 +52,9 @@ export function formatKey(ext = "") {
 export function formatBreakdown(files = []) {
   const out = {
     JPEG: 0,
+    PNG: 0,
+    WEBP: 0,
+    GIF: 0,
     ARW: 0,
     MP4: 0,
     MTS: 0,

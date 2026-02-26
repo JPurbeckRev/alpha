@@ -6,6 +6,9 @@ import { ensureDir } from "./fs-utils.js";
 const EXT_TO_MIME = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
+  ".png": "image/png",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
   ".mp4": "video/mp4",
 };
 
@@ -16,6 +19,15 @@ function ext(fileName = "") {
 function chooseShareSource(sourceFiles = []) {
   const jpeg = sourceFiles.find((sf) => [".jpg", ".jpeg"].includes(ext(sf.originalName)));
   if (jpeg) return { source: jpeg, outExt: ".jpg", format: "jpeg" };
+
+  const png = sourceFiles.find((sf) => ext(sf.originalName) === ".png");
+  if (png) return { source: png, outExt: ".png", format: "png" };
+
+  const webp = sourceFiles.find((sf) => ext(sf.originalName) === ".webp");
+  if (webp) return { source: webp, outExt: ".webp", format: "webp" };
+
+  const gif = sourceFiles.find((sf) => ext(sf.originalName) === ".gif");
+  if (gif) return { source: gif, outExt: ".gif", format: "gif" };
 
   const mp4 = sourceFiles.find((sf) => ext(sf.originalName) === ".mp4");
   if (mp4) return { source: mp4, outExt: ".mp4", format: "mp4" };
