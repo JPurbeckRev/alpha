@@ -90,6 +90,59 @@ export async function generateDerivativesForAssets({ assets, sourceFiles, deriva
   };
 }
 
+export async function generateThumbsForAssets({ assets, sourceFiles, derivativesRoot }) {
+  const thumbsDir = path.join(derivativesRoot, "thumbs");
+  await ensureDir(thumbsDir);
+
+  let sharp = null;
+  try {
+    const mod = await import("sharp");
+    sharp = mod.default || mod;
+  } catch {
+    return { generated: 0, skipped: assets.length };
+  }
+
+  const bySourceId = new Map(sourceFiles.map((sf) => [sf.id, sf]));
+  let generated = 0;
+  let skipped = 0;
+
+  for (const asset of assets) {
+    if (asset.type === "video") {
+      skipped++;
+      continue;
+    }
+
+    const thumbPath = path.join(thumbsDir, `${asset.id}-thumb.jpg`);
+    try {
+      await fs.access(thumbPath);
+      skipped++;
+      continue;
+    } catch {
+      // continue
+    }
+
+    const owned = asset.sourceFileIds.map((id) => bySourceId.get(id)).filter(Boolean);
+    const selected = chooseShareSource(owned);
+    if (!selected?.source?.storagePath) {
+      skipped++;
+      continue;
+    }
+
+    try {
+      await sharp(selected.source.storagePath)
+        .rotate()
+        .resize(320, 320, { fit: "cover" })
+        .jpeg({ quality: 60 })
+        .toFile(thumbPath);
+      generated++;
+    } catch {
+      skipped++;
+    }
+  }
+
+  return { generated, skipped };
+}
+
 export function latestReadyShareDerivative(db, assetId) {
   const candidates = db.derivatives
     .filter((d) => d.assetId === assetId && d.type === "share" && d.status === "ready")

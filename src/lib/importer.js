@@ -13,7 +13,7 @@ import {
 import { ensureDir, pathExists, safeMoveFile } from "./fs-utils.js";
 import { sha256File } from "./hash.js";
 import { extractMetadata } from "./metadata.js";
-import { generateDerivativesForAssets } from "./derivatives.js";
+import { generateDerivativesForAssets, generateThumbsForAssets } from "./derivatives.js";
 import { processDerivativeJobs, queueDerivativeJobsForAssets } from "./derivative-jobs.js";
 
 function sanitizeFileName(name) {
@@ -305,6 +305,13 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
       sourceFiles: importedSourceFiles,
       derivativesRoot: paths.derivativesRoot,
     });
+
+    // Warm tile thumbnails in background to avoid first-view latency.
+    generateThumbsForAssets({
+      assets,
+      sourceFiles: importedSourceFiles,
+      derivativesRoot: paths.derivativesRoot,
+    }).catch(() => {});
 
     const queuedJobs = queueDerivativeJobsForAssets({
       db,

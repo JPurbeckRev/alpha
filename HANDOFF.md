@@ -3,11 +3,11 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-26 12:58
-- **Current Dev Cycle:** Round 1 (Performance Sprint P3)
-- **Current Status:** Completed performance sprint sequence for Render responsiveness: P1 added HTTP compression and thumbnail delivery hardening, P2 added paged timeline loading with "Load More", and P3 switched to lazy tab hydration to avoid heavy all-tab startup fetches.
-- **In Progress:** Final tuning + production observation pass on Render latency.
-- **Next Prescribed Step:** Measure first-paint and tile-render timings in production, then tune page size and thumbnail cache TTL.
+- **Last Updated (PST):** 2026-02-26 15:15
+- **Current Dev Cycle:** Round 1 (Performance Sprint P5)
+- **Current Status:** Improved perceived upload completion and preview performance: upload jobs now reserve completion range for finalization (no misleading 100% stall), completion state is published before heavy refreshes, and thumbnail generation is now warmed in background immediately after import to reduce first-library tile misses.
+- **In Progress:** Production verification of P4/P5 with real media sets.
+- **Next Prescribed Step:** Validate Render tile latency after one import cycle; if still slow, move to dedicated thumb worker queue with precompute guarantees.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 95%
 
@@ -58,6 +58,8 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-26 12:46 | Executor Agent | Product Manager (Jon) | Performance Sprint P1 | Added server compression middleware and hardened thumb-serving path behavior for faster transfer + smaller payloads on repeated tile loads. | Execute P2: paged timeline loading with incremental "Load More" UX. |
 | 2026-02-26 12:52 | Executor Agent | Product Manager (Jon) | Performance Sprint P2 | Implemented timeline paging (`pageSize=8`) and incremental "Load More" flow in Library, reducing initial payload/render cost. | Execute P3: lazy tab hydration to avoid all-tab startup API fan-out. |
 | 2026-02-26 12:58 | Executor Agent | Product Manager (Jon) | Performance Sprint P3 | Switched initial app boot to lazy tab hydration (load Home first; defer Library/Albums/Sharing until opened), reducing startup blocking and perceived slowness. | Run production timing pass and tune tile/page parameters as needed. |
+| 2026-02-26 15:07 | Executor Agent | Product Manager (Jon) | Performance Sprint P4 | Fixed tile fallback behavior so thumb misses gracefully retry full preview before marking unavailable, eliminating mass "Preview unavailable" false negatives. | Execute P5 to reduce upload-finalization stall perception. |
+| 2026-02-26 15:15 | Executor Agent | Product Manager (Jon) | Performance Sprint P5 | Updated upload job UX: progress now caps at 90% during transfer, enters explicit finalizing state, and marks completion before heavy background refreshes; added post-import background thumbnail warming to improve subsequent tile load speed. | Validate Render behavior and tune thumb pipeline for sustained speed. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.

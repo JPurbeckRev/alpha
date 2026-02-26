@@ -1016,7 +1016,7 @@
         const isFeature = false;
         const media = isVideo
           ? `<video src="${getThumbUrl(asset)}" controls muted preload="metadata"></video>`
-          : `<img src="${getThumbUrl(asset)}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
+          : `<img src="${getThumbUrl(asset)}" alt="asset preview" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='${getPreviewUrl(asset)}';}else{this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'; }" />`;
 
         const actions = includeActions
           ? `<div class="library-card-actions">
@@ -1049,7 +1049,7 @@
         const queuedDelete = state.pendingDeleteAssetIds.has(asset.id);
         const media = isVideo
           ? `<video src="${getThumbUrl(asset)}" controls muted preload="metadata"></video>`
-          : `<img src="${getThumbUrl(asset)}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
+          : `<img src="${getThumbUrl(asset)}" alt="asset preview" loading="lazy" onerror="if(!this.dataset.fallback){this.dataset.fallback='1';this.src='${getPreviewUrl(asset)}';}else{this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'; }" />`;
 
         return `
           <div class="card ${isFeature ? 'feature' : ''} ${selected ? 'selected' : ''}" data-library-card="${asset.id}" style="${queuedDelete ? 'outline:2px solid var(--danger);' : ''}">
@@ -1224,15 +1224,16 @@
           const now = performance.now();
           if (now - lastPaint < 80) return;
           lastPaint = now;
-          const p = t ? Math.round((l / t) * 100) : 0;
+          const raw = t ? Math.round((l / t) * 100) : 0;
+          const p = Math.min(90, raw);
           progress.value = p;
-          updateUploadJob(jobId, { status: 'uploading', progress: p, detail: `${p}%` });
+          updateUploadJob(jobId, { status: 'uploading', progress: p, detail: `${raw}% uploaded` });
         };
 
         try {
           await appendFilesInBatches(fd, files, onPrepProgress);
           const upload = await uploadBatchWithProgress(fd, onUploadProgress, ctrl.signal);
-          updateUploadJob(jobId, { status: 'importing', progress: 100, detail: 'Processing import...' });
+          updateUploadJob(jobId, { status: 'finalizing', progress: 92, detail: 'Upload complete. Finalizing import...' });
           const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
             method: 'POST',
             signal: ctrl.signal,
@@ -1240,9 +1241,9 @@
           });
           $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
           renderImportResultPanel(upload, importLog);
-          updateUploadJob(jobId, { status: 'done', detail: `Complete: ${importLog.counts.logicalAssetsCreated} assets` });
+          updateUploadJob(jobId, { status: 'done', progress: 100, detail: `Complete: ${importLog.counts.logicalAssetsCreated} assets` });
           status.textContent = `Import complete!`;
-          await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
+          Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]).catch(() => {});
         } catch (error) {
           const canceled = error?.name === 'AbortError';
           $('importOut').textContent = canceled ? 'Canceled by user.' : `Error: ${error.message}`;
@@ -1597,6 +1598,7 @@
 
   </body>
 </html>
+
 
 
 
