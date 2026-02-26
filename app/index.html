@@ -213,7 +213,7 @@
         position: relative;
         isolation: isolate;
       }
-      .card.feature { grid-column: span 2; grid-row: span 2; }
+      .card.feature { grid-column: span 1; grid-row: span 1; }
       .card:hover {
         transform: translateY(-4px);
         box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
@@ -235,24 +235,31 @@
       .card:hover .thumb img, .card:hover .thumb video { transform: scale(1.03); }
       
       .card-body { 
-        padding: 12px; 
-        font-size: 0.85rem; 
-        background: var(--panel-2); 
-        border-top: 1px solid var(--line);
-        z-index: 1;
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        bottom: 8px;
+        padding: 8px 10px;
+        font-size: 0.78rem;
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 2;
       }
       
       .pill {
         display: inline-block;
-        font-size: 0.75rem;
-        font-weight: 500;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        padding: 3px 8px;
-        margin-right: 6px;
-        margin-bottom: 6px;
-        color: var(--muted);
-        background: var(--panel);
+        font-size: 0.7rem;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.22);
+        border-radius: 999px;
+        padding: 2px 7px;
+        margin-right: 5px;
+        margin-bottom: 4px;
+        color: #f2f6ff;
+        background: rgba(8, 12, 20, 0.45);
       }
 
       /* Polished Actions */
@@ -830,7 +837,7 @@
 
       function mediaCard(asset, index = 0, includeActions = false) {
         const isVideo = asset.type === "video";
-        const isFeature = (index % 7 === 0);
+        const isFeature = false;
         const media = isVideo
           ? `<video src="${getMediaUrl(asset)}" controls muted preload="metadata"></video>`
           : `<img src="${getMediaUrl(asset)}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
@@ -865,7 +872,7 @@
 
       function libraryMediaCard(asset, index = 0) {
         const isVideo = asset.type === "video";
-        const isFeature = (index % 7 === 0);
+        const isFeature = false;
         const selected = state.selectedLibraryAssets.has(asset.id);
         const queuedDelete = state.pendingDeleteAssetIds.has(asset.id);
         const media = isVideo
