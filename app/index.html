@@ -604,7 +604,7 @@
           <input id="importAlbumName" placeholder="Custom album name" />
           <button class="primary" id="runImportBtn">Upload + Import</button>
         </div>
-        <div class="muted mini">This owner flow is explicit staging + import in one guided action.</div>
+        <div class="muted mini">This owner flow is explicit staging + import in one guided action. If you enter a custom album name, AlphaVision will use it automatically.</div>
         <div id="importPrepStatus" class="mini muted" style="margin-top:12px;">No files selected yet.</div>
         <progress id="importPrepProgress" max="100" value="0" style="width:100%; height:8px; border-radius:4px; margin-top:12px; display:none;"></progress>
         
@@ -1222,7 +1222,12 @@
       async function runImportFlow() {
         const files = Array.from($('importFiles').files || []);
         if (!files.length) return $('importOut').textContent = 'Select files first.';
-        await startUploadJob({ files, rule: $('importRule').value, albumName: $('importAlbumName').value || null });
+
+        const typedAlbumName = $('importAlbumName').value?.trim();
+        const selectedRule = $('importRule').value;
+        const effectiveRule = typedAlbumName ? 'new_name' : selectedRule;
+
+        await startUploadJob({ files, rule: effectiveRule, albumName: typedAlbumName || null });
       }
 
       async function refreshLibrary() {
