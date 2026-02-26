@@ -3,11 +3,11 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 15:50
-- **Current Dev Cycle:** Round 1 (Sprint 17 completed)
-- **Current Status:** Import flow frontend performance hardening delivered: batched FormData file preparation with main-thread yielding, throttled preparation progress updates, and lightweight import selection summary to avoid heavy DOM work during large batches.
+- **Last Updated (PST):** 2026-02-25 16:01
+- **Current Dev Cycle:** Round 1 (Sprint 18 completed)
+- **Current Status:** Library delete UX upgraded with polished icon-style delete controls and multi-select bulk deletion in timeline view, including sticky bulk action bar and immediate post-delete refresh.
 - **In Progress:** None
-- **Next Prescribed Step:** Designer review Sprint 17 outcomes and issue Sprint 18 packet.
+- **Next Prescribed Step:** Designer review Sprint 18 outcomes and issue Sprint 19 packet.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 99%
 
@@ -49,6 +49,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 15:32 | Executor Agent | Design Agent | Sprint 16.1 Executed | Implemented first-run empty-state coaching UI for Library Timeline, Albums list, and empty album detail view. Added clear CTA routing (Go to Import / Open Library) to avoid blank first-run surfaces. Smoke UAT passed. | Hand off Sprint 16.2 mobile responsiveness pass. |
 | 2026-02-25 15:39 | Executor Agent | Design Agent | Sprint 16.2 Executed | Delivered mobile responsiveness pass in owner UI: responsive tab rail behavior, stacked mobile form/button layout, larger tap targets, and mobile grid behavior (2-column <=768px, 1-column <=480px) with hero-card span normalization to eliminate overflow. Smoke UAT passed; manually checked at 375x812 viewport. | Designer review and issue next implementation packet. |
 | 2026-02-25 15:50 | Executor Agent | Design Agent | Sprint 17 Executed | Implemented import UI performance/memory hardening: chunked file-to-FormData preparation with event-loop yielding, throttled progress text/bar updates to reduce reflow pressure, and lightweight file selection summary (sample only) to avoid heavy render paths on large batches. Smoke UAT passed. | Designer review and issue Sprint 18 packet. |
+| 2026-02-25 16:01 | Executor Agent | Design Agent | Sprint 18 Executed | Implemented polished library delete UX and bulk-delete workflow: icon-based per-card delete control, per-card selection checkbox, selected-card highlighting, and sticky bulk action bar with clear/delete-selected actions. Bulk delete uses concurrent calls to existing delete endpoint and refreshes UI/state immediately. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.
@@ -135,4 +136,29 @@ Validation commands:
 - Monitor the browser Task Manager / Performance tab to ensure memory doesn't spiral out of control and the main thread isn't blocked.
 Commit message suggestion:
 fix(import): resolve browser lock-up and memory leaks during bulk upload
+```
+
+### Sprint 18 (Bulk Delete & UI Polish)
+```md
+Task ID: Sprint-18-Bulk-Delete
+Goal: Redesign the asset delete button to be more aesthetically pleasing and implement multi-select bulk deletion for library items.
+Scope (files allowed):
+- Frontend HTML/JS/CSS files (e.g., `public/app/index.html`, `public/app/style.css`, `public/app/app.js`, `public/app/library.js` or equivalent).
+- Backend API files if a new bulk-delete endpoint is needed (e.g., `src/routes/library.js`, `src/services/libraryService.js` or equivalent).
+Non-goals:
+- Changes to the import flow or sharing links.
+Implementation notes:
+- **UI Polish:** Change the current Delete button on asset cards to a modern icon button (e.g., a trash can icon or an elegant textual layout) that is discreetly positioned (or appears on hover). Update the CSS for a cleaner, polished look.
+- **Multi-select:** Add a way to select multiple assets in the library grid (e.g., a selection mode, checkboxes on cards, or shift-click).
+- **Bulk Delete Action:** When one or more assets are selected, show a floating action bar or a prominent button to "Delete X selected items".
+- **Backend Sync:** If the backend does not natively support bulk deletion, either implement a `POST/DELETE /api/library/bulk-delete` endpoint, or have the frontend issue concurrent calls to the existing delete endpoint using `Promise.all()`.
+Acceptance criteria:
+- The delete button looks aesthetically pleasing.
+- User can select multiple assets in the library and delete them all at once.
+- The UI reflects the deletion immediately (removing them from the DOM and state).
+Validation commands:
+- `npm run uat:smoke`
+- Manually create a few mock assets, select multiple, and delete them.
+Commit message suggestion:
+feat(ui): redesign delete button and add multi-select bulk deletion
 ```
