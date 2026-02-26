@@ -1077,12 +1077,28 @@
           document.querySelectorAll('[data-delete-asset]').forEach(btn => {
             btn.onclick = async (e) => {
               e.preventDefault();
-              if (!confirm('Permanently delete this item?')) return;
+              const assetId = btn.dataset.deleteAsset;
+              const armed = btn.dataset.armed === '1';
+
+              if (!armed) {
+                btn.dataset.armed = '1';
+                btn.title = 'Click again to permanently delete';
+                btn.style.background = 'rgba(255, 115, 128, 0.85)';
+                setTimeout(() => {
+                  btn.dataset.armed = '0';
+                  btn.title = 'Delete forever';
+                  btn.style.background = '';
+                }, 3000);
+                return;
+              }
+
               try {
-                await api(`/api/library/assets/${btn.dataset.deleteAsset}`, { method: 'DELETE' });
-                state.selectedLibraryAssets.delete(btn.dataset.deleteAsset);
+                await api(`/api/library/assets/${assetId}`, { method: 'DELETE' });
+                state.selectedLibraryAssets.delete(assetId);
                 await Promise.all([refreshLibrary(), refreshStats(), refreshHomeExperience()]);
-              } catch (err) { alert(`Delete failed: ${err.message}`); }
+              } catch (err) {
+                alert(`Delete failed: ${err.message}`);
+              }
             };
           });
 
