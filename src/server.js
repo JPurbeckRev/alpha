@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
+import fsp from "node:fs/promises";
 import { paths, limits } from "./config.js";
 import { ensureDir } from "./lib/fs-utils.js";
 import { JsonStore } from "./lib/store.js";
@@ -89,6 +90,28 @@ function pickOwnerPreviewSource(sourceFiles = []) {
   if (mp4) return mp4;
 
   return null;
+}
+
+async function ensureThumbForAsset(asset, db) {
+  const thumbsDir = path.join(paths.derivativesRoot, "thumbs");
+  await ensureDir(thumbsDir);
+  const thumbPath = path.join(thumbsDir, `${asset.id}-thumb.jpg`);
+  if (fs.existsSync(thumbPath)) return thumbPath;
+
+  const source = pickOwnerPreviewSource(asset.sourceFiles);
+  if (!source?.storagePath) return null;
+
+  if (asset.type === "video") return source.storagePath;
+
+  try {
+    const mod = await import("sharp");
+    const sharp = mod.default || mod;
+    await sharp(source.storagePath).rotate().resize(512, 512, { fit: "cover" }).jpeg({ quality: 72 }).toFile(thumbPath);
+    return thumbPath;
+  } catch {
+    // fallback: no sharp installed or unsupported file
+    return source.storagePath;
+  }
 }
 
 function withShareRateLimit(req, res, next) {
@@ -644,6 +667,20 @@ app.post("/api/library/assets/bulk-delete", async (req, res) => {
     deleted,
     failed,
   });
+});
+
+app.get("/api/owner/assets/:assetId/thumb", async (req, res) => {
+  const db = await store.read();
+  const asset = hydrateAssets(db).find((a) => a.id === req.params.assetId);
+  if (!asset) return res.status(404).json({ error: "Asset not found" });
+
+  const thumbPath = await ensureThumbForAsset(asset, db);
+  if (!thumbPath) return res.status(415).json({ error: "Thumbnail not available" });
+
+  const isJpeg = thumbPath.endsWith("-thumb.jpg");
+  res.setHeader("Content-Type", isJpeg ? "image/jpeg" : sourceMime(thumbPath));
+  res.setHeader("Cache-Control", "private, max-age=600");
+  return sendFileSafe(res, thumbPath, { notFoundMessage: "Thumb file missing" });
 });
 
 app.get("/api/owner/assets/:assetId/preview", async (req, res) => {

@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AlphaVision Login</title>
   <style>
-    body { margin:0; font-family: Inter, Segoe UI, sans-serif; background:#0d1424; color:#e8efff; display:grid; place-items:center; min-height:100vh; }
-    .card { width:min(420px, calc(100vw - 32px)); border:1px solid #2e3e69; border-radius:14px; background:#121d36; padding:20px; }
-    input, button, select { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2e3e69; background:#0f1930; color:#e8efff; margin-top:10px; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: Inter, Segoe UI, sans-serif; background:#0d1424; color:#e8efff; display:grid; place-items:center; min-height:100vh; padding:16px; }
+    .card { width:min(420px, 100%); border:1px solid #2e3e69; border-radius:14px; background:#121d36; padding:20px; overflow:hidden; }
+    input, button, select { width:100%; max-width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2e3e69; background:#0f1930; color:#e8efff; margin-top:10px; }
     button { cursor:pointer; font-weight:600; }
-    .muted { color:#aebcde; font-size:.9rem; }
+    .muted { color:#aebcde; font-size:.9rem; word-break:break-word; }
   </style>
 </head>
 <body>
