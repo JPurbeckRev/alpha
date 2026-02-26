@@ -968,20 +968,20 @@
       }
 
       async function runImportFlow() {
-        const files = importFiles.files;
-        if (!files.length) return importOut.textContent = 'Select files first.';
+        const files = $('importFiles').files;
+        if (!files.length) return $('importOut').textContent = 'Select files first.';
 
-        const runBtn = runImportBtn;
-        const progress = importPrepProgress;
-        const status = importPrepStatus;
+        const runBtn = $('runImportBtn');
+        const progress = $('importPrepProgress');
+        const status = $('importPrepStatus');
         const total = files.length;
 
         runBtn.disabled = true;
         progress.style.display = 'block';
         progress.value = 0;
-        importOut.textContent = '';
-        appendImportLog(Import started with  file(s).);
-        status.textContent = Preparing  files for upload...;
+        $('importOut').textContent = '';
+        appendImportLog(`Import started with ${total} file(s).`);
+        status.textContent = `Preparing ${total} files for upload...`;
 
         const fd = new FormData();
 
@@ -992,38 +992,38 @@
           lastPaint = now;
           const pct = Math.round((completed / count) * 100);
           progress.value = pct;
-          status.textContent = Preparing upload... / files (%);
+          status.textContent = `Preparing upload... ${completed}/${count} files (${pct}%)`;
         };
 
         try {
           await appendFilesInBatches(fd, files, onPrepProgress);
           progress.removeAttribute('value');
-          status.textContent = Uploading  files...;
-          appendImportLog(Upload request sent for  file(s).);
+          status.textContent = `Uploading ${total} files...`;
+          appendImportLog(`Upload request sent for ${total} file(s).`);
 
           const uploadRes = await fetch('/api/staging/upload', { method: 'POST', body: fd });
           const upload = await uploadRes.json();
           if (!uploadRes.ok) throw new Error(upload.error || 'Upload failed');
 
-          const rule = importRule.value;
-          const albumName = importAlbumName.value || null;
+          const rule = $('importRule').value;
+          const albumName = $('importAlbumName').value || null;
 
           status.textContent = 'Running import...';
-          appendImportLog(Upload complete. Batch ID . Running import.);
-          const importLog = await api(/api/imports//execute, {
+          appendImportLog(`Upload complete. Batch ID ${upload.batchId}. Running import.`);
+          const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
             method: 'POST',
             body: JSON.stringify({ createAlbums: true, rule, albumName }),
           });
 
-          importOut.textContent = JSON.stringify({ upload, importLog }, null, 2);
+          $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
           renderImportResultPanel(upload, importLog);
-          status.textContent = Import complete.  assets created from  files.;
+          status.textContent = `Import complete. ${importLog.counts.logicalAssetsCreated} assets created from ${importLog.counts.totalFilesInBatch} files.`;
           await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
         } catch (error) {
-          appendImportLog(Import failed: );
-          importOut.textContent = Error: ;
-          importResultPanel.style.display = 'none';
-          status.textContent = Import failed: ;
+          appendImportLog(`Import failed: ${error.message}`);
+          $('importOut').textContent = `Error: ${error.message}`;
+          $('importResultPanel').style.display = 'none';
+          status.textContent = `Import failed: ${error.message}`;
         } finally {
           runBtn.disabled = false;
           setTimeout(() => {
@@ -1383,4 +1383,5 @@
     </script>
   </body>
 </html>
+
 
