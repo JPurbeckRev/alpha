@@ -5,7 +5,6 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID, scrypt as scryptCb, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
-import fsp from "node:fs/promises";
 import { paths, limits } from "./config.js";
 import { ensureDir } from "./lib/fs-utils.js";
 import { JsonStore } from "./lib/store.js";
@@ -37,6 +36,7 @@ import {
 const app = express();
 const port = Number(process.env.PORT || 8787);
 const scrypt = promisify(scryptCb);
+const thumbJobs = new Map();
 
 const store = new JsonStore(paths.dbPath);
 const shareRateLimiter = createMemoryRateLimiter({ windowMs: 60_000, max: 1200 });
@@ -92,26 +92,33 @@ function pickOwnerPreviewSource(sourceFiles = []) {
   return null;
 }
 
-async function ensureThumbForAsset(asset, db) {
+async function ensureThumbForAsset(asset) {
   const thumbsDir = path.join(paths.derivativesRoot, "thumbs");
   await ensureDir(thumbsDir);
   const thumbPath = path.join(thumbsDir, `${asset.id}-thumb.jpg`);
   if (fs.existsSync(thumbPath)) return thumbPath;
 
   const source = pickOwnerPreviewSource(asset.sourceFiles);
-  if (!source?.storagePath) return null;
+  if (!source?.storagePath || asset.type === "video") return null;
 
-  if (asset.type === "video") return source.storagePath;
-
-  try {
-    const mod = await import("sharp");
-    const sharp = mod.default || mod;
-    await sharp(source.storagePath).rotate().resize(512, 512, { fit: "cover" }).jpeg({ quality: 72 }).toFile(thumbPath);
-    return thumbPath;
-  } catch {
-    // fallback: no sharp installed or unsupported file
-    return source.storagePath;
+  if (thumbJobs.has(asset.id)) {
+    await thumbJobs.get(asset.id);
+    return fs.existsSync(thumbPath) ? thumbPath : null;
   }
+
+  const job = (async () => {
+    try {
+      const mod = await import("sharp");
+      const sharp = mod.default || mod;
+      await sharp(source.storagePath).rotate().resize(320, 320, { fit: "cover" }).jpeg({ quality: 60 }).toFile(thumbPath);
+    } catch {
+      // no-op
+    }
+  })();
+
+  thumbJobs.set(asset.id, job);
+  await job.finally(() => thumbJobs.delete(asset.id));
+  return fs.existsSync(thumbPath) ? thumbPath : null;
 }
 
 function withShareRateLimit(req, res, next) {
@@ -674,13 +681,31 @@ app.get("/api/owner/assets/:assetId/thumb", async (req, res) => {
   const asset = hydrateAssets(db).find((a) => a.id === req.params.assetId);
   if (!asset) return res.status(404).json({ error: "Asset not found" });
 
-  const thumbPath = await ensureThumbForAsset(asset, db);
-  if (!thumbPath) return res.status(415).json({ error: "Thumbnail not available" });
+  const thumbsDir = path.join(paths.derivativesRoot, "thumbs");
+  const thumbPath = path.join(thumbsDir, `${asset.id}-thumb.jpg`);
 
-  const isJpeg = thumbPath.endsWith("-thumb.jpg");
-  res.setHeader("Content-Type", isJpeg ? "image/jpeg" : sourceMime(thumbPath));
-  res.setHeader("Cache-Control", "private, max-age=600");
-  return sendFileSafe(res, thumbPath, { notFoundMessage: "Thumb file missing" });
+  // Fast path: serve cached thumbnail immediately.
+  if (fs.existsSync(thumbPath)) {
+    res.setHeader("Content-Type", "image/jpeg");
+    res.setHeader("Cache-Control", "private, max-age=86400");
+    return sendFileSafe(res, thumbPath, { notFoundMessage: "Thumb file missing" });
+  }
+
+  // Warm thumbnail in background, but do not block first paint.
+  ensureThumbForAsset(asset).catch(() => {});
+
+  const derivative = latestReadyShareDerivative(db, asset.id);
+  if (derivative?.storagePath) {
+    res.setHeader("Content-Type", derivative.mimeType || "application/octet-stream");
+    res.setHeader("Cache-Control", "private, max-age=120");
+    return sendFileSafe(res, derivative.storagePath, { notFoundMessage: "Preview file missing" });
+  }
+
+  const source = pickOwnerPreviewSource(asset.sourceFiles);
+  if (!source?.storagePath) return res.status(415).json({ error: "Thumbnail not available" });
+  res.setHeader("Content-Type", sourceMime(source.originalName));
+  res.setHeader("Cache-Control", "private, max-age=60");
+  return sendFileSafe(res, source.storagePath, { notFoundMessage: "Preview source file missing" });
 });
 
 app.get("/api/owner/assets/:assetId/preview", async (req, res) => {
