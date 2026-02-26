@@ -241,24 +241,29 @@
         color: var(--muted);
       }
       .card.selected {
-        outline: 2px solid var(--accent);
+        outline: 2px solid color-mix(in srgb, var(--accent) 72%, white 28%);
         outline-offset: -2px;
+        box-shadow: 0 0 0 1px rgba(0,0,0,0.2) inset;
       }
       .icon-btn {
-        border: 1px solid rgba(255, 115, 128, 0.6);
-        border-radius: 999px;
-        background: rgba(24, 14, 24, 0.86);
-        color: #ffc7cd;
-        width: 30px;
-        height: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        background: rgba(6, 10, 18, 0.62);
+        color: rgba(233, 239, 255, 0.92);
+        width: 28px;
+        height: 28px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
         line-height: 1;
-        font-size: 0.9rem;
+        font-size: 0.82rem;
+        backdrop-filter: blur(3px);
+        transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
       }
       .icon-btn:hover {
-        background: rgba(62, 18, 30, 0.95);
+        background: rgba(92, 25, 34, 0.9);
+        border-color: rgba(255, 115, 128, 0.5);
+        transform: translateY(-1px);
       }
       .library-card-actions {
         position: absolute;
@@ -267,16 +272,30 @@
         display: flex;
         gap: 6px;
         z-index: 2;
+        opacity: 0;
+        transition: opacity 140ms ease;
+      }
+      .card:hover .library-card-actions,
+      .card.selected .library-card-actions,
+      .card:focus-within .library-card-actions {
+        opacity: 1;
       }
       .select-chip {
+        width: 28px;
+        height: 28px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        border: 1px solid var(--line);
-        border-radius: 999px;
-        padding: 4px 8px;
-        font-size: 0.72rem;
-        background: rgba(10, 16, 30, 0.8);
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        background: rgba(6, 10, 18, 0.62);
+        backdrop-filter: blur(3px);
+      }
+      .select-chip input {
+        width: 14px;
+        height: 14px;
+        accent-color: var(--accent);
+        margin: 0;
       }
       .bulk-action-bar {
         position: sticky;
@@ -286,12 +305,13 @@
         align-items: center;
         justify-content: space-between;
         gap: 10px;
-        border: 1px solid var(--line);
-        border-radius: 12px;
-        padding: 10px;
-        background: var(--panel-2);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
-        margin-top: 10px;
+        border: 1px solid rgba(255,255,255,0.14);
+        border-radius: 14px;
+        padding: 10px 12px;
+        background: rgba(12, 18, 34, 0.88);
+        backdrop-filter: blur(8px);
+        box-shadow: 0 8px 24px rgba(3, 8, 20, 0.35);
+        margin-top: 12px;
       }
       .list {
         display: grid;
@@ -427,6 +447,9 @@
           grid-column: span 1;
           grid-row: span 1;
         }
+        .library-card-actions {
+          opacity: 1;
+        }
         .thumb {
           aspect-ratio: 1/1;
           height: auto;
@@ -538,6 +561,7 @@
         <div class="muted">This owner flow is explicit staging + import in one guided action.</div>
         <div id="importPrepStatus" class="mini muted" style="margin-top:8px;">No files selected yet.</div>
         <progress id="importPrepProgress" max="100" value="0" style="width:100%; margin-top:8px; display:none;"></progress>
+        <div id="importPreviewContainer" class="cards" style="margin-top:12px; display:none;"></div>
         <div id="importResultPanel" class="list-item" style="display:none; margin:10px 0;"></div>
         <details>
           <summary class="mini muted">Import details</summary>
@@ -790,9 +814,8 @@
         return `
           <div class="card ${isFeature ? 'feature' : ''} ${selected ? 'selected' : ''}" data-library-card="${asset.id}">
             <div class="library-card-actions">
-              <label class="select-chip" title="Select for bulk delete">
+              <label class="select-chip" title="Select for bulk delete" aria-label="Select for bulk delete">
                 <input type="checkbox" data-select-asset="${asset.id}" ${selected ? 'checked' : ''} />
-                Select
               </label>
               <button data-delete-asset="${asset.id}" class="icon-btn" title="Delete asset" aria-label="Delete asset">🗑</button>
             </div>

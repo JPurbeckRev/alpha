@@ -3,9 +3,9 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 16:01
-- **Current Dev Cycle:** Round 1 (Sprint 18 completed)
-- **Current Status:** Library delete UX upgraded with polished icon-style delete controls and multi-select bulk deletion in timeline view, including sticky bulk action bar and immediate post-delete refresh.
+- **Last Updated (PST):** 2026-02-25 16:04
+- **Current Dev Cycle:** Round 1 (Sprint 18 completed, refined)
+- **Current Status:** Library delete UX refined after visual feedback: cleaner minimal overlay controls, hover/focus reveal on desktop with always-visible controls on mobile, tighter bulk action bar styling, and preserved multi-select bulk deletion behavior.
 - **In Progress:** None
 - **Next Prescribed Step:** Designer review Sprint 18 outcomes and issue Sprint 19 packet.
 - **Open Blockers:** None
@@ -50,6 +50,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 15:39 | Executor Agent | Design Agent | Sprint 16.2 Executed | Delivered mobile responsiveness pass in owner UI: responsive tab rail behavior, stacked mobile form/button layout, larger tap targets, and mobile grid behavior (2-column <=768px, 1-column <=480px) with hero-card span normalization to eliminate overflow. Smoke UAT passed; manually checked at 375x812 viewport. | Designer review and issue next implementation packet. |
 | 2026-02-25 15:50 | Executor Agent | Design Agent | Sprint 17 Executed | Implemented import UI performance/memory hardening: chunked file-to-FormData preparation with event-loop yielding, throttled progress text/bar updates to reduce reflow pressure, and lightweight file selection summary (sample only) to avoid heavy render paths on large batches. Smoke UAT passed. | Designer review and issue Sprint 18 packet. |
 | 2026-02-25 16:01 | Executor Agent | Design Agent | Sprint 18 Executed | Implemented polished library delete UX and bulk-delete workflow: icon-based per-card delete control, per-card selection checkbox, selected-card highlighting, and sticky bulk action bar with clear/delete-selected actions. Bulk delete uses concurrent calls to existing delete endpoint and refreshes UI/state immediately. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
+| 2026-02-25 16:04 | Executor Agent | Design Agent | Sprint 18 Refinement | Applied visual cleanup based on PM feedback: reduced visual noise on card controls (compact monochrome action chips), desktop hover/focus reveal behavior, improved selected-state styling, and more subtle glass-style bulk action bar while keeping mobile accessibility and existing bulk-delete behavior intact. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.
