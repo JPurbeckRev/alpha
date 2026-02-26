@@ -92,6 +92,10 @@
       [data-view="comfortable"] { --card-size: 260px; --card-gap: 24px; }
       [data-view="compact"] { --card-size: 140px; --card-gap: 8px; }
 
+      [data-tile-size="small"] { --card-size: 150px; }
+      [data-tile-size="medium"] { --card-size: 200px; }
+      [data-tile-size="large"] { --card-size: 280px; }
+
       * { box-sizing: border-box; }
       body {
         margin: 0;
@@ -659,8 +663,15 @@
             <div class="row">
               <select id="setViewMode" style="flex:1;">
                 <option value="comfortable">Comfortable (Heroic)</option>
-                <option value="grid">Standard Grid</option>
+                <option value="standard">Standard Grid</option>
                 <option value="compact">Compact (Dense)</option>
+              </select>
+            </div>
+            <div class="row">
+              <select id="setTileSize" style="flex:1;">
+                <option value="small">Tile Size: Small</option>
+                <option value="medium">Tile Size: Medium</option>
+                <option value="large">Tile Size: Large</option>
               </select>
             </div>
           </div>
@@ -852,10 +863,6 @@
           <div class="card ${isFeature ? 'feature' : ''}">
             ${actions}
             <div class="thumb" style="cursor:pointer;" onclick="openLightbox('${getMediaUrl(asset)}', '${asset.type}')">${media}</div>
-            <div class="card-body">
-              <div class="mini"><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown")}</span></div>
-              <div class="muted mini" style="margin-top:2px;">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
-            </div>
           </div>
         `;
       }
@@ -891,10 +898,6 @@
               </button>
             </div>
             <div class="thumb" style="cursor:pointer;" onclick="openLightbox('${getMediaUrl(asset)}', '${asset.type}')">${media}</div>
-            <div class="card-body">
-              <div class="mini"><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown")}</span></div>
-              <div class="muted mini" style="margin-top:2px;">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
-            </div>
           </div>
         `;
       }
@@ -1218,9 +1221,15 @@
       async function loadSettings() {
         try {
           const settings = await api('/api/owner/settings');
-          $('setTheme').value = settings.theme; $('setViewMode').value = settings.viewMode; $('setGrouping').value = settings.defaultGrouping;
+          const viewMode = settings.viewMode === 'grid' ? 'standard' : (settings.viewMode || 'standard');
+          const tileSize = settings.tileSize || 'medium';
+          $('setTheme').value = settings.theme;
+          $('setViewMode').value = viewMode;
+          $('setTileSize').value = tileSize;
+          $('setGrouping').value = settings.defaultGrouping;
           document.documentElement.setAttribute('data-theme', settings.theme);
-          document.documentElement.setAttribute('data-view', settings.viewMode);
+          document.documentElement.setAttribute('data-view', viewMode);
+          document.documentElement.setAttribute('data-tile-size', tileSize);
           $('libGroupBy').value = settings.defaultGrouping;
         } catch (err) {}
       }
@@ -1292,9 +1301,10 @@
       $('saveSettingsBtn').onclick = async () => {
         try {
           $('settingsStatus').textContent = 'Saving…';
-          const settings = await api('/api/owner/settings', { method: 'PATCH', body: JSON.stringify({ theme: $('setTheme').value, viewMode: $('setViewMode').value, defaultGrouping: $('setGrouping').value }) });
+          const settings = await api('/api/owner/settings', { method: 'PATCH', body: JSON.stringify({ theme: $('setTheme').value, viewMode: $('setViewMode').value, tileSize: $('setTileSize').value, defaultGrouping: $('setGrouping').value }) });
           document.documentElement.setAttribute('data-theme', settings.theme);
-          document.documentElement.setAttribute('data-view', settings.viewMode);
+          document.documentElement.setAttribute('data-view', settings.viewMode === 'grid' ? 'standard' : settings.viewMode);
+          document.documentElement.setAttribute('data-tile-size', settings.tileSize || 'medium');
           $('settingsStatus').textContent = 'Saved!';
           setTimeout(() => $('settingsStatus').textContent = '', 2000);
         } catch (err) { $('settingsStatus').textContent = `Error: ${err.message}`; }
