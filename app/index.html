@@ -736,6 +736,13 @@
         }
       }
 
+      function appendImportLog(line) {
+        const stamp = new Date().toLocaleTimeString();
+        const current = $('importOut').textContent || '';
+        const next = `${current}\n[${stamp}] ${line}`.trim();
+        $('importOut').textContent = next;
+      }
+
       async function api(url, options = {}) {
         const res = await fetch(url, {
           headers: { "Content-Type": "application/json", ...(options.headers || {}) },
@@ -961,18 +968,20 @@
       }
 
       async function runImportFlow() {
-        const files = $('importFiles').files;
-        if (!files.length) return $('importOut').textContent = 'Select files first.';
+        const files = importFiles.files;
+        if (!files.length) return importOut.textContent = 'Select files first.';
 
-        const runBtn = $('runImportBtn');
-        const progress = $('importPrepProgress');
-        const status = $('importPrepStatus');
+        const runBtn = runImportBtn;
+        const progress = importPrepProgress;
+        const status = importPrepStatus;
         const total = files.length;
 
         runBtn.disabled = true;
         progress.style.display = 'block';
         progress.value = 0;
-        status.textContent = `Preparing ${total} files for upload…`;
+        importOut.textContent = '';
+        appendImportLog(Import started with  file(s).);
+        status.textContent = Preparing  files for upload...;
 
         const fd = new FormData();
 
@@ -983,35 +992,38 @@
           lastPaint = now;
           const pct = Math.round((completed / count) * 100);
           progress.value = pct;
-          status.textContent = `Preparing upload… ${completed}/${count} files (${pct}%)`;
+          status.textContent = Preparing upload... / files (%);
         };
 
         try {
           await appendFilesInBatches(fd, files, onPrepProgress);
-          progress.value = 100;
-          status.textContent = `Uploading ${total} files…`;
+          progress.removeAttribute('value');
+          status.textContent = Uploading  files...;
+          appendImportLog(Upload request sent for  file(s).);
 
           const uploadRes = await fetch('/api/staging/upload', { method: 'POST', body: fd });
           const upload = await uploadRes.json();
           if (!uploadRes.ok) throw new Error(upload.error || 'Upload failed');
 
-          const rule = $('importRule').value;
-          const albumName = $('importAlbumName').value || null;
+          const rule = importRule.value;
+          const albumName = importAlbumName.value || null;
 
-          status.textContent = 'Running import…';
-          const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
+          status.textContent = 'Running import...';
+          appendImportLog(Upload complete. Batch ID . Running import.);
+          const importLog = await api(/api/imports//execute, {
             method: 'POST',
             body: JSON.stringify({ createAlbums: true, rule, albumName }),
           });
 
-          $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
+          importOut.textContent = JSON.stringify({ upload, importLog }, null, 2);
           renderImportResultPanel(upload, importLog);
-          status.textContent = `Import complete. ${importLog.counts.logicalAssetsCreated} assets created from ${importLog.counts.totalFilesInBatch} files.`;
+          status.textContent = Import complete.  assets created from  files.;
           await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
         } catch (error) {
-          $('importOut').textContent = `Error: ${error.message}`;
-          $('importResultPanel').style.display = 'none';
-          status.textContent = `Import failed: ${error.message}`;
+          appendImportLog(Import failed: );
+          importOut.textContent = Error: ;
+          importResultPanel.style.display = 'none';
+          status.textContent = Import failed: ;
         } finally {
           runBtn.disabled = false;
           setTimeout(() => {
@@ -1090,12 +1102,21 @@
 
           if ($('deleteSelectedLibraryBtn')) {
             $('deleteSelectedLibraryBtn').onclick = async () => {
-              const ids = Array.from(state.selectedLibraryAssets);
+              const ids = Array.from(state.selectedLibraryAssets).map((id) => String(id).trim()).filter(Boolean);
               if (!ids.length) return;
               if (!confirm(`Permanently delete ${ids.length} selected item(s) from your library? This also deletes originals from disk.`)) return;
 
               try {
-                await Promise.all(ids.map((id) => api(`/api/library/assets/${id}`, { method: 'DELETE' })));
+                const result = await api('/api/library/assets/bulk-delete', {
+                  method: 'POST',
+                  body: JSON.stringify({ assetIds: ids }),
+                });
+
+                if (result.failedCount) {
+                  const firstError = result.failed?.[0]?.error || 'Unknown error';
+                  alert(`Bulk delete partially completed: ${result.deletedCount} deleted, ${result.failedCount} failed. First error: ${firstError}`);
+                }
+
                 state.selectedLibraryAssets.clear();
                 await Promise.all([refreshLibrary(), refreshStats(), refreshHomeExperience()]);
               } catch (error) {
@@ -1362,3 +1383,4 @@
     </script>
   </body>
 </html>
+

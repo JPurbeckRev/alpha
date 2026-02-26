@@ -18,7 +18,7 @@ import {
   removeAssetFromAlbum,
   updateAlbum,
 } from "./lib/albums.js";
-import { deleteAsset } from "./lib/assets.js";
+import { bulkDeleteAssets, deleteAsset } from "./lib/assets.js";
 import { latestReadyShareDerivative } from "./lib/derivatives.js";
 import { createMemoryRateLimiter } from "./lib/rate-limit.js";
 import { listDerivativeJobs, processDerivativeJobs } from "./lib/derivative-jobs.js";
@@ -365,6 +365,46 @@ app.delete("/api/library/assets/:assetId", async (req, res) => {
   } catch (error) {
     return res.status(400).json({ error: error.message });
   }
+});
+
+app.post("/api/library/bulk-delete", async (req, res) => {
+  try {
+    const assetIds = Array.isArray(req.body?.assetIds) ? req.body.assetIds : [];
+    if (!assetIds.length) {
+      return res.status(400).json({ error: "No assetIds provided" });
+    }
+    const results = await store.update((db) => bulkDeleteAssets(db, assetIds));
+    return res.json({ results });
+  } catch (error) {
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.post("/api/library/assets/bulk-delete", async (req, res) => {
+  const assetIds = Array.isArray(req.body?.assetIds) ? req.body.assetIds.filter(Boolean) : [];
+  if (!assetIds.length) {
+    return res.status(400).json({ error: "assetIds[] is required" });
+  }
+
+  const deleted = [];
+  const failed = [];
+
+  for (const assetId of assetIds) {
+    try {
+      const result = await store.update((db) => deleteAsset(db, assetId));
+      deleted.push({ assetId, ...result });
+    } catch (error) {
+      failed.push({ assetId, error: error.message });
+    }
+  }
+
+  return res.json({
+    requested: assetIds.length,
+    deletedCount: deleted.length,
+    failedCount: failed.length,
+    deleted,
+    failed,
+  });
 });
 
 app.get("/api/owner/assets/:assetId/preview", async (req, res) => {

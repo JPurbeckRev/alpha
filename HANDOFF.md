@@ -3,11 +3,11 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 16:04
-- **Current Dev Cycle:** Round 1 (Sprint 18 completed, refined)
-- **Current Status:** Library delete UX refined after visual feedback: cleaner minimal overlay controls, hover/focus reveal on desktop with always-visible controls on mobile, tighter bulk action bar styling, and preserved multi-select bulk deletion behavior.
+- **Last Updated (PST):** 2026-02-25 16:29
+- **Current Dev Cycle:** Round 1 (Sprint 18 hotfix committed)
+- **Current Status:** Bulk delete reliability and import UX clarity hotfix shipped: added backend bulk-delete endpoint used by library multi-select delete, and corrected import panel behavior so log output is populated during runs while upload phase shows indeterminate progress instead of false 100% completion.
 - **In Progress:** None
-- **Next Prescribed Step:** Designer review Sprint 18 outcomes and issue Sprint 19 packet.
+- **Next Prescribed Step:** Designer review Sprint 18 hotfix and issue Sprint 19 packet.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 99%
 
@@ -51,6 +51,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 15:50 | Executor Agent | Design Agent | Sprint 17 Executed | Implemented import UI performance/memory hardening: chunked file-to-FormData preparation with event-loop yielding, throttled progress text/bar updates to reduce reflow pressure, and lightweight file selection summary (sample only) to avoid heavy render paths on large batches. Smoke UAT passed. | Designer review and issue Sprint 18 packet. |
 | 2026-02-25 16:01 | Executor Agent | Design Agent | Sprint 18 Executed | Implemented polished library delete UX and bulk-delete workflow: icon-based per-card delete control, per-card selection checkbox, selected-card highlighting, and sticky bulk action bar with clear/delete-selected actions. Bulk delete uses concurrent calls to existing delete endpoint and refreshes UI/state immediately. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
 | 2026-02-25 16:04 | Executor Agent | Design Agent | Sprint 18 Refinement | Applied visual cleanup based on PM feedback: reduced visual noise on card controls (compact monochrome action chips), desktop hover/focus reveal behavior, improved selected-state styling, and more subtle glass-style bulk action bar while keeping mobile accessibility and existing bulk-delete behavior intact. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
+| 2026-02-25 16:29 | Executor Agent | Design Agent | Sprint 18 Hotfix | Fixed bulk delete failures by adding `POST /api/library/assets/bulk-delete` and switching UI multi-delete to payload-based endpoint calls. Also fixed import UX confusion by writing live import log lines during run phases and using indeterminate progress during network upload to avoid misleading 100%-while-uploading state. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.
