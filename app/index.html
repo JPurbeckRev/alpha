@@ -1189,7 +1189,6 @@
       $('createAlbumBtn').onclick = async () => { await api('/api/albums', { method: 'POST', body: JSON.stringify({ name: $('newAlbumName').value }) }); $('newAlbumName').value = ''; refreshAlbums(); };
       $('loadAlbumBtn').onclick = loadAlbum;
       $('renameAlbumBtn').onclick = async () => { await api(`/api/albums/${$('selectedAlbumPicker').value}`, { method: 'PATCH', body: JSON.stringify({ name: $('renameAlbumName').value }) }); loadAlbum(); refreshAlbums(); };
-      let albumDeleteConfirmUntil = 0;
       $('deleteAlbumBtn').onclick = async () => {
         const picker = $('selectedAlbumPicker');
         const btn = $('deleteAlbumBtn');
@@ -1200,22 +1199,17 @@
           return;
         }
 
-        const now = Date.now();
-        if (now > albumDeleteConfirmUntil) {
-          const albumName = picker.options[picker.selectedIndex]?.text || 'selected album';
-          btn.textContent = 'Click again to confirm';
-          status.textContent = `Confirm delete for "${albumName}" within 6 seconds.`;
-          albumDeleteConfirmUntil = now + 6000;
-          setTimeout(() => {
-            if (Date.now() > albumDeleteConfirmUntil) {
-              btn.textContent = 'Delete';
-              status.textContent = '';
-            }
-          }, 6200);
+        const albumName = picker.options[picker.selectedIndex]?.text || 'selected album';
+        const deletePhotosToo = confirm('What should happen to media in this album?\n\nOK = Delete album + media\nCancel = Delete album only (keep media in library)');
+        const finalConfirm = confirm(
+          deletePhotosToo
+            ? `Delete album "${albumName}" and permanently delete its media?`
+            : `Delete album "${albumName}" and keep media in library?`
+        );
+        if (!finalConfirm) {
+          status.textContent = 'Album deletion canceled.';
           return;
         }
-
-        const deletePhotosToo = confirm('Also delete photos/videos inside this album?\n\nOK = Delete album + media\nCancel = Delete album only (keep media in library)');
 
         try {
           btn.disabled = true;
@@ -1223,7 +1217,6 @@
           await api(`/api/albums/${albumId}?deleteAssets=${deletePhotosToo ? 'true' : 'false'}`, { method: 'DELETE' });
           picker.value = '';
           $('albumAssets').innerHTML = '';
-          albumDeleteConfirmUntil = 0;
           btn.textContent = 'Delete';
           status.textContent = deletePhotosToo ? 'Album and media deleted.' : 'Album deleted. Media kept in library.';
           await Promise.all([refreshAlbums(), refreshHomeExperience(), refreshShares(), refreshStats(), refreshLibrary()]);
