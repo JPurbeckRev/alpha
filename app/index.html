@@ -721,12 +721,15 @@
     <script>
       
       let lbZoom = 1;
+      let lbIndex = -1;
       function getMediaUrl(asset) {
         return asset.url || asset.previewUrl || ('/api/owner/assets/' + asset.id + '/preview');
       }
-      function openLightbox(url, type) {
+      function openLightbox(url, type, assetId = null) {
         lbZoom = 1;
-        
+        const seq = state.lightboxSequence || [];
+        lbIndex = assetId ? seq.findIndex((a) => a.id === assetId) : -1;
+
         $('lbContent').innerHTML = type === 'video' 
           ? `<video src="${url}" controls autoplay class="lightbox-media" id="lbMedia"></video>`
           : `<img src="${url}" class="lightbox-media" id="lbMedia" />`;
@@ -736,6 +739,15 @@
       function closeLightbox() {
         $('lightbox').classList.remove('open');
         $('lbContent').innerHTML = '';
+        lbIndex = -1;
+      }
+
+      function navigateLightbox(direction) {
+        const seq = state.lightboxSequence || [];
+        if (!seq.length || lbIndex < 0) return;
+        lbIndex = (lbIndex + direction + seq.length) % seq.length;
+        const next = seq[lbIndex];
+        openLightbox(next.url, next.type, next.id);
       }
       function updateLbZoom() {
         const media = $('lbMedia');
@@ -751,19 +763,23 @@
         attachLb('lbFillBtn', () => { const m = $('lbMedia'); if (m) m.classList.toggle('fill'); });
         attachLb('lbZoomInBtn', () => { lbZoom = Math.min(lbZoom + 0.5, 5); updateLbZoom(); });
         attachLb('lbZoomOutBtn', () => { lbZoom = Math.max(lbZoom - 0.5, 0.5); updateLbZoom(); });
+        attachLb('lbPrevBtn', () => navigateLightbox(-1));
+        attachLb('lbNextBtn', () => navigateLightbox(1));
       });
 
       // Handle Escape key
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && $('lightbox')?.classList.contains('open')) {
-          closeLightbox();
-        }
+        if (!$('lightbox')?.classList.contains('open')) return;
+        if (e.key === 'Escape') closeLightbox();
+        if (e.key === 'ArrowLeft') navigateLightbox(-1);
+        if (e.key === 'ArrowRight') navigateLightbox(1);
       });
 
       const state = {
         albums: [],
         selectedLibraryAssets: new Set(),
         pendingDeleteAssetIds: new Set(),
+        lightboxSequence: [],
       };
 
       function $(id) { return document.getElementById(id); }
@@ -875,7 +891,7 @@
         return `
           <div class="card ${isFeature ? 'feature' : ''}">
             ${actions}
-            <div class="thumb" style="cursor:pointer;" onclick="openLightbox('${getMediaUrl(asset)}', '${asset.type}')">${media}</div>
+            <div class="thumb" style="cursor:pointer;" onclick="openLightbox('${getMediaUrl(asset)}', '${asset.type}', '${asset.id}')">${media}</div>
           </div>
         `;
       }
@@ -910,7 +926,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
               </button>
             </div>
-            <div class="thumb" style="cursor:pointer;" onclick="openLightbox('${getMediaUrl(asset)}', '${asset.type}')">${media}</div>
+            <div class="thumb" style="cursor:pointer;" onclick="openLightbox('${getMediaUrl(asset)}', '${asset.type}', '${asset.id}')">${media}</div>
           </div>
         `;
       }
@@ -1095,6 +1111,8 @@
             ? timeline.items.map(g => ({ ...g, assets: g.assets.filter(a => a.fileNames?.some(n => n.toLowerCase().includes(search))) })).filter(g => g.assets.length)
             : timeline.items;
 
+          state.lightboxSequence = filtered.flatMap(g => g.assets.map(a => ({ id: a.id, url: getMediaUrl(a), type: a.type })));
+
           const vis = new Set(filtered.flatMap(g => g.assets.map(a => a.id)));
           state.selectedLibraryAssets.forEach(id => { if (!vis.has(id)) state.selectedLibraryAssets.delete(id); });
 
@@ -1189,6 +1207,7 @@
         if (!id) return;
         try {
           const album = await api(`/api/albums/${id}`);
+          state.lightboxSequence = album.assets.map((a) => ({ id: a.id, url: getMediaUrl(a), type: a.type }));
           $('renameAlbumName').value = album.name;
           $('albumAssets').innerHTML = album.assets.map((a, i) => mediaCard(a, i, true)).join('') || emptyState('Album is empty', 'Add items from library.', 'Library', 'library', 'albDetEmptyBtn');
           bindEmptyStateCtas();
@@ -1332,6 +1351,12 @@
   
     <div id="lightbox" class="lightbox">
       <div class="lightbox-header">
+        <button id="lbPrevBtn" class="lightbox-btn" title="Previous (←)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <button id="lbNextBtn" class="lightbox-btn" title="Next (→)">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
         <button id="lbZoomOutBtn" class="lightbox-btn" title="Zoom Out">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
         </button>
