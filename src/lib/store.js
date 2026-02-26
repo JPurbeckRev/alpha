@@ -63,12 +63,16 @@ export class JsonStore {
   }
 
   async update(mutator) {
-    this.#writeQueue = this.#writeQueue.then(async () => {
-      const db = await this.read();
-      const result = await mutator(db);
-      await this.write(db);
-      return result;
-    });
+    this.#writeQueue = this.#writeQueue
+      .catch(() => {
+        // Prevent a prior failed mutation from permanently poisoning the queue.
+      })
+      .then(async () => {
+        const db = await this.read();
+        const result = await mutator(db);
+        await this.write(db);
+        return result;
+      });
 
     return this.#writeQueue;
   }
