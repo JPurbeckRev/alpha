@@ -37,6 +37,23 @@ function classifyFile(fileName) {
   };
 }
 
+async function mapWithConcurrency(items, worker, concurrency = 4) {
+  const results = new Array(items.length);
+  let cursor = 0;
+
+  async function runWorker() {
+    while (cursor < items.length) {
+      const index = cursor;
+      cursor += 1;
+      results[index] = await worker(items[index], index);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => runWorker());
+  await Promise.all(workers);
+  return results;
+}
+
 function buildLogicalAssets(sourceFiles, importedAtIso) {
   const assets = [];
   const photos = sourceFiles.filter((f) => f.kind === "photo");
@@ -154,9 +171,7 @@ export async function stageBatchFromUploads({ multerFiles, batchId, paths, store
   const existingChecksums = new Set(db.sourceFiles.map((f) => f.checksum));
   const seenChecksums = new Set();
 
-  const files = [];
-
-  for (const uploadFile of multerFiles) {
+  const stagedFiles = await mapWithConcurrency(multerFiles, async (uploadFile) => {
     const originalName = sanitizeFileName(uploadFile.originalname || uploadFile.filename);
     const derived = classifyFile(originalName);
     const checksum = await sha256File(uploadFile.path);
@@ -164,13 +179,9 @@ export async function stageBatchFromUploads({ multerFiles, batchId, paths, store
     const stagingPath = path.join(stagingBatchDir, destinationName);
 
     await safeMoveFile(uploadFile.path, stagingPath);
-
-    const duplicate = existingChecksums.has(checksum) || seenChecksums.has(checksum);
-    seenChecksums.add(checksum);
-
     const metadata = await extractMetadata(stagingPath, derived.kind);
 
-    files.push({
+    return {
       id: randomUUID(),
       originalName,
       ext: derived.ext,
@@ -181,14 +192,19 @@ export async function stageBatchFromUploads({ multerFiles, batchId, paths, store
       mimeType: uploadFile.mimetype,
       size: uploadFile.size,
       checksum,
-      duplicate,
       stagingPath,
       takenAt: metadata.takenAt,
       cameraModel: metadata.cameraModel,
       metadataSource: metadata.metadataSource,
       uploadedAt: stagedAt,
-    });
-  }
+    };
+  }, 4);
+
+  const files = stagedFiles.map((file) => {
+    const duplicate = existingChecksums.has(file.checksum) || seenChecksums.has(file.checksum);
+    seenChecksums.add(file.checksum);
+    return { ...file, duplicate };
+  });
 
   const summary = {
     totalFiles: files.length,
@@ -225,9 +241,8 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
     await ensureDir(paths.originalsRoot);
 
     const importable = batch.files.filter((f) => !f.duplicate);
-    const importedSourceFiles = [];
 
-    for (const file of importable) {
+    const importedSourceFiles = await mapWithConcurrency(importable, async (file) => {
       const destinationPath = path.join(paths.originalsRoot, `${file.checksum}${file.ext}`);
       const alreadyExists = await pathExists(destinationPath);
 
@@ -237,7 +252,7 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
         await fs.unlink(file.stagingPath);
       }
 
-      importedSourceFiles.push({
+      return {
         id: randomUUID(),
         assetId: null,
         batchId,
@@ -255,8 +270,8 @@ export async function executeImport({ batchId, createAlbums, rule, albumName, pa
         cameraModel: file.cameraModel ?? null,
         metadataSource: file.metadataSource ?? "none",
         importedAt: importedAtIso,
-      });
-    }
+      };
+    }, 6);
 
     const assets = buildLogicalAssets(importedSourceFiles, importedAtIso);
     const assetBySourceId = new Map();

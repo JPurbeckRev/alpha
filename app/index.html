@@ -1007,6 +1007,7 @@
         status.textContent = `Preparing ${total} files for upload...`;
 
         const fd = new FormData();
+        const t0 = performance.now();
 
         let lastPaint = 0;
         const onPrepProgress = (completed, count) => {
@@ -1029,23 +1030,29 @@
 
         try {
           await appendFilesInBatches(fd, files, onPrepProgress);
+          const prepMs = Math.round(performance.now() - t0);
           progress.value = 0;
           status.textContent = `Uploading ${total} files... 0%`;
-          appendImportLog(`Upload request sent for ${total} file(s).`);
+          appendImportLog(`Prepared files in ${prepMs}ms. Upload request sent for ${total} file(s).`);
 
+          const uploadStart = performance.now();
           const upload = await uploadBatchWithProgress(fd, onUploadProgress);
 
           const rule = $('importRule').value;
           const albumName = $('importAlbumName').value || null;
 
+          const uploadMs = Math.round(performance.now() - uploadStart);
           status.textContent = 'Running import...';
-          appendImportLog(`Upload complete. Batch ID ${upload.batchId}. Running import.`);
+          appendImportLog(`Upload complete in ${uploadMs}ms. Batch ID ${upload.batchId}. Running import.`);
+          const importStart = performance.now();
           const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
             method: 'POST',
             body: JSON.stringify({ createAlbums: true, rule, albumName }),
           });
 
-          $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
+          const importMs = Math.round(performance.now() - importStart);
+          appendImportLog(`Import execution completed in ${importMs}ms.`);
+          $('importOut').textContent = JSON.stringify({ upload, importLog, timingsMs: { prep: prepMs, upload: uploadMs, importExecute: importMs } }, null, 2);
           renderImportResultPanel(upload, importLog);
           status.textContent = `Import complete. ${importLog.counts.logicalAssetsCreated} assets created from ${importLog.counts.totalFilesInBatch} files.`;
           await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);

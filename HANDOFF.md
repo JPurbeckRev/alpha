@@ -3,11 +3,11 @@
 Purpose: capture every handoff state with timestamp, owner transition, status, and the single prescribed next step.
 
 ## Current State (authoritative quick view)
-- **Last Updated (PST):** 2026-02-25 16:31
-- **Current Dev Cycle:** Round 1 (Sprint 18 hotfix + nav regression fix)
-- **Current Status:** Fixed post-hotfix frontend regression that broke tab navigation (Library inaccessible) caused by malformed import script text replacement. Import script syntax repaired; tab navigation and app initialization restored.
+- **Last Updated (PST):** 2026-02-25 16:48
+- **Current Dev Cycle:** Round 1 (Sprint 18 upload performance pass)
+- **Current Status:** Upload/import performance and transparency pass shipped: backend staging/import now process files with bounded concurrency (instead of strictly sequential), and frontend now shows true network upload progress plus timing breakdown (prep/upload/import) in import details.
 - **In Progress:** None
-- **Next Prescribed Step:** Designer review Sprint 18 hotfix and issue Sprint 19 packet.
+- **Next Prescribed Step:** Validate real-world batch upload speed in owner UI and issue Sprint 19 packet.
 - **Open Blockers:** None
 - **Overall PRD Completion (estimate):** 99%
 
@@ -53,6 +53,7 @@ Purpose: capture every handoff state with timestamp, owner transition, status, a
 | 2026-02-25 16:04 | Executor Agent | Design Agent | Sprint 18 Refinement | Applied visual cleanup based on PM feedback: reduced visual noise on card controls (compact monochrome action chips), desktop hover/focus reveal behavior, improved selected-state styling, and more subtle glass-style bulk action bar while keeping mobile accessibility and existing bulk-delete behavior intact. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
 | 2026-02-25 16:29 | Executor Agent | Design Agent | Sprint 18 Hotfix | Fixed bulk delete failures by adding `POST /api/library/assets/bulk-delete` and switching UI multi-delete to payload-based endpoint calls. Also fixed import UX confusion by writing live import log lines during run phases and using indeterminate progress during network upload to avoid misleading 100%-while-uploading state. Smoke UAT passed. | Designer review and issue Sprint 19 packet. |
 | 2026-02-25 16:31 | Executor Agent | Design Agent | Sprint 18 Regression Fix | Fixed frontend syntax regression in `app/index.html` that prevented script execution and broke tab navigation (including Library). Repaired `runImportFlow` string/template literals and revalidated Library tab navigation in-browser. | Continue with Sprint 19 packet planning. |
+| 2026-02-25 16:48 | Executor Agent | Design Agent | Sprint 18 Upload Performance Pass | Optimized upload path for perceived + actual speed: parallelized staging/import file processing with bounded concurrency in importer pipeline, added real network upload progress tracking via XHR upload events, and surfaced prep/upload/import timing metrics in Import details for diagnosis. Smoke UAT passed. | Run real-world validation with medium batches and tune concurrency if needed. |
 
 ## Usage Rules
 - `HANDOFF.md` is the single source of truth for: **where we left off** and **what is in progress**.
