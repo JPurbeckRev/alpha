@@ -363,7 +363,7 @@
         right: 16px;
         bottom: 16px;
         width: min(420px, calc(100vw - 32px));
-        max-height: 45vh;
+        max-height: 52vh;
         overflow: auto;
         z-index: 120;
         border: 1px solid var(--line);
@@ -799,6 +799,7 @@
         pendingDeleteAssetIds: new Set(),
         lightboxSequence: [],
         uploadJobs: [],
+        uploadDockCollapsed: false,
       };
 
       function $(id) { return document.getElementById(id); }
@@ -874,27 +875,67 @@
 
       function renderUploadJobsDock() {
         const dock = $('uploadJobsDock');
-        const jobs = state.uploadJobs.filter(j => j.status !== 'done' && j.status !== 'failed' && j.status !== 'canceled');
-        if (!jobs.length) {
+        const activeJobs = state.uploadJobs.filter(j => !['done','failed','canceled'].includes(j.status));
+        const historyJobs = state.uploadJobs.filter(j => ['done','failed','canceled'].includes(j.status)).slice(-8).reverse();
+        if (!activeJobs.length && !historyJobs.length) {
           dock.classList.add('hidden');
           dock.innerHTML = '';
           return;
         }
         dock.classList.remove('hidden');
-        dock.innerHTML = jobs.map(j => `
-          <div class="upload-job">
-            <div class="mini"><strong>${esc(j.name)}</strong> · ${esc(j.status)}</div>
-            <div class="mini muted">${esc(j.detail || '')}</div>
-            <progress max="100" value="${j.progress || 0}" style="width:100%;height:6px;margin-top:6px;"></progress>
-            <div class="row" style="margin-top:6px;margin-bottom:0;">
-              <button data-cancel-upload-job="${j.id}" class="danger">Cancel</button>
+
+        const body = state.uploadDockCollapsed ? '' : `
+          ${activeJobs.map(j => `
+            <div class="upload-job">
+              <div class="mini"><strong>${esc(j.name)}</strong> · ${esc(j.status)}</div>
+              <div class="mini muted">${esc(j.detail || '')}</div>
+              <progress max="100" value="${j.progress || 0}" style="width:100%;height:6px;margin-top:6px;"></progress>
+              <div class="row" style="margin-top:6px;margin-bottom:0;">
+                <button data-cancel-upload-job="${j.id}" class="danger">Cancel</button>
+              </div>
+            </div>
+          `).join('')}
+          ${historyJobs.length ? `<div class="mini muted" style="margin:8px 0 4px;">Recent jobs</div>` : ''}
+          ${historyJobs.map(j => `
+            <div class="upload-job">
+              <div class="mini"><strong>${esc(j.name)}</strong> · ${esc(j.status)}</div>
+              <div class="mini muted">${esc(j.detail || '')}</div>
+              <div class="row" style="margin-top:6px;margin-bottom:0;">
+                ${j.status !== 'done' ? `<button data-retry-upload-job="${j.id}">Retry</button>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        `;
+
+        dock.innerHTML = `
+          <div class="row" style="justify-content:space-between; margin:0 0 8px;">
+            <strong>Upload Jobs (${activeJobs.length} active)</strong>
+            <div class="row" style="margin:0;">
+              <button id="toggleUploadDockBtn">${state.uploadDockCollapsed ? 'Expand' : 'Collapse'}</button>
+              <button id="clearUploadHistoryBtn">Clear</button>
             </div>
           </div>
-        `).join('');
+          ${body}
+        `;
+
+        $('toggleUploadDockBtn').onclick = () => { state.uploadDockCollapsed = !state.uploadDockCollapsed; renderUploadJobsDock(); };
+        $('clearUploadHistoryBtn').onclick = () => {
+          state.uploadJobs = state.uploadJobs.filter(j => !['done','failed','canceled'].includes(j.status));
+          renderUploadJobsDock();
+        };
+
         document.querySelectorAll('[data-cancel-upload-job]').forEach(btn => {
           btn.onclick = () => {
             const job = state.uploadJobs.find(j => j.id === btn.dataset.cancelUploadJob);
             if (job?.cancel) job.cancel();
+          };
+        });
+
+        document.querySelectorAll('[data-retry-upload-job]').forEach(btn => {
+          btn.onclick = () => {
+            const job = state.uploadJobs.find(j => j.id === btn.dataset.retryUploadJob);
+            if (!job?.files?.length) return;
+            startUploadJob({ files: job.files, rule: job.rule, albumName: job.albumName });
           };
         });
       }
@@ -1112,15 +1153,15 @@
         };
       }
 
-      async function runImportFlow() {
-        const files = Array.from($('importFiles').files || []);
-        if (!files.length) return $('importOut').textContent = 'Select files first.';
-
+      async function startUploadJob({ files, rule, albumName }) {
         const jobId = crypto.randomUUID();
         const ctrl = new AbortController();
         const job = {
           id: jobId,
           name: `${files.length} file${files.length === 1 ? '' : 's'}`,
+          files,
+          rule,
+          albumName,
           status: 'queued',
           progress: 0,
           detail: 'Queued',
@@ -1160,7 +1201,7 @@
           const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
             method: 'POST',
             signal: ctrl.signal,
-            body: JSON.stringify({ createAlbums: true, rule: $('importRule').value, albumName: $('importAlbumName').value || null }),
+            body: JSON.stringify({ createAlbums: true, rule, albumName: albumName || null }),
           });
           $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
           renderImportResultPanel(upload, importLog);
@@ -1176,6 +1217,12 @@
           setTimeout(() => { progress.style.display = 'none'; }, 1000);
           renderUploadJobsDock();
         }
+      }
+
+      async function runImportFlow() {
+        const files = Array.from($('importFiles').files || []);
+        if (!files.length) return $('importOut').textContent = 'Select files first.';
+        await startUploadJob({ files, rule: $('importRule').value, albumName: $('importAlbumName').value || null });
       }
 
       async function refreshLibrary() {
