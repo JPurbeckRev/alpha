@@ -726,14 +726,37 @@
           fd.append('files', files[i]);
 
           const completed = i + 1;
-          if (onProgress && (completed === total || completed % batchSize === 0)) {
-            onProgress(completed, total);
-          }
+          if (onProgress) onProgress(completed, total);
 
           if (completed % batchSize === 0) {
             await nextTick();
           }
         }
+      }
+
+      function uploadBatchWithProgress(formData, onProgress) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/api/staging/upload');
+          xhr.responseType = 'json';
+
+          xhr.upload.onprogress = (evt) => {
+            if (!evt.lengthComputable || !onProgress) return;
+            onProgress(evt.loaded, evt.total);
+          };
+
+          xhr.onload = () => {
+            const body = xhr.response || (() => {
+              try { return JSON.parse(xhr.responseText); } catch { return { raw: xhr.responseText }; }
+            })();
+
+            if (xhr.status >= 200 && xhr.status < 300) resolve(body);
+            else reject(new Error(body?.error || `Upload failed (${xhr.status})`));
+          };
+
+          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.send(formData);
+        });
       }
 
       function appendImportLog(line) {
@@ -995,15 +1018,22 @@
           status.textContent = `Preparing upload... ${completed}/${count} files (${pct}%)`;
         };
 
+        const onUploadProgress = (loaded, totalBytes) => {
+          const now = performance.now();
+          if (now - lastPaint < 80) return;
+          lastPaint = now;
+          const pct = totalBytes ? Math.round((loaded / totalBytes) * 100) : 0;
+          progress.value = pct;
+          status.textContent = `Uploading ${total} files... ${pct}%`;
+        };
+
         try {
           await appendFilesInBatches(fd, files, onPrepProgress);
-          progress.removeAttribute('value');
-          status.textContent = `Uploading ${total} files...`;
+          progress.value = 0;
+          status.textContent = `Uploading ${total} files... 0%`;
           appendImportLog(`Upload request sent for ${total} file(s).`);
 
-          const uploadRes = await fetch('/api/staging/upload', { method: 'POST', body: fd });
-          const upload = await uploadRes.json();
-          if (!uploadRes.ok) throw new Error(upload.error || 'Upload failed');
+          const upload = await uploadBatchWithProgress(fd, onUploadProgress);
 
           const rule = $('importRule').value;
           const albumName = $('importAlbumName').value || null;
