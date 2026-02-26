@@ -732,6 +732,7 @@
       const state = {
         albums: [],
         selectedLibraryAssets: new Set(),
+        pendingDeleteAssetId: null,
       };
 
       function $(id) { return document.getElementById(id); }
@@ -904,6 +905,21 @@
         `;
       }
 
+      function renderSingleDeletePrompt() {
+        if (!state.pendingDeleteAssetId) return '';
+        return `
+          <div class="list-item" id="singleDeletePrompt" style="margin-bottom:12px; border-color: var(--danger);">
+            <div class="row" style="justify-content:space-between; align-items:center; margin:0;">
+              <div><strong>Delete this item?</strong> <span class="muted mini">This cannot be undone.</span></div>
+              <div class="row" style="margin:0;">
+                <button id="cancelSingleDeleteBtn">Cancel</button>
+                <button class="danger" id="confirmSingleDeleteBtn">Delete Item</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
       async function refreshStats() {
         try {
           const [health, summary] = await Promise.all([api('/api/health'), api('/api/library/summary')]);
@@ -1064,7 +1080,9 @@
             </div>
           `).join('');
 
-          $('timelineContainer').innerHTML = html ? `${html}${renderBulkActionBar()}` : emptyState('Library is empty', 'Nothing to show here.', 'Import Photos', 'import', 'libEmptyBtn');
+          $('timelineContainer').innerHTML = html
+            ? `${renderSingleDeletePrompt()}${html}${renderBulkActionBar()}`
+            : emptyState('Library is empty', 'Nothing to show here.', 'Import Photos', 'import', 'libEmptyBtn');
           bindEmptyStateCtas();
 
           document.querySelectorAll('[data-select-asset]').forEach(input => {
@@ -1077,30 +1095,32 @@
           document.querySelectorAll('[data-delete-asset]').forEach(btn => {
             btn.onclick = async (e) => {
               e.preventDefault();
-              const assetId = btn.dataset.deleteAsset;
-              const armed = btn.dataset.armed === '1';
+              state.pendingDeleteAssetId = btn.dataset.deleteAsset;
+              refreshLibrary();
+            };
+          });
 
-              if (!armed) {
-                btn.dataset.armed = '1';
-                btn.title = 'Click again to permanently delete';
-                btn.style.background = 'rgba(255, 115, 128, 0.85)';
-                setTimeout(() => {
-                  btn.dataset.armed = '0';
-                  btn.title = 'Delete forever';
-                  btn.style.background = '';
-                }, 3000);
-                return;
-              }
+          if ($('cancelSingleDeleteBtn')) {
+            $('cancelSingleDeleteBtn').onclick = () => {
+              state.pendingDeleteAssetId = null;
+              refreshLibrary();
+            };
+          }
 
+          if ($('confirmSingleDeleteBtn')) {
+            $('confirmSingleDeleteBtn').onclick = async () => {
+              const assetId = state.pendingDeleteAssetId;
+              if (!assetId) return;
               try {
                 await api(`/api/library/assets/${assetId}`, { method: 'DELETE' });
                 state.selectedLibraryAssets.delete(assetId);
+                state.pendingDeleteAssetId = null;
                 await Promise.all([refreshLibrary(), refreshStats(), refreshHomeExperience()]);
               } catch (err) {
                 alert(`Delete failed: ${err.message}`);
               }
             };
-          });
+          }
 
           if ($('clearLibrarySelectionBtn')) $('clearLibrarySelectionBtn').onclick = () => { state.selectedLibraryAssets.clear(); refreshLibrary(); };
           if ($('deleteSelectedLibraryBtn')) $('deleteSelectedLibraryBtn').onclick = async () => {
