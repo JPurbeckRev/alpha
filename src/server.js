@@ -195,8 +195,18 @@ app.use("/uat", express.static(path.join(paths.root, "app")));
 app.use("/docs", express.static(path.join(paths.root, "docs")));
 
 app.get("/", (_req, res) => res.redirect("/app"));
-app.get("/app", (_req, res) => res.sendFile(path.join(paths.root, "app", "index.html")));
-app.get("/uat", (_req, res) => res.sendFile(path.join(paths.root, "app", "index.html")));
+app.get("/app", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  return res.sendFile(path.join(paths.root, "app", "index.html"));
+});
+app.get("/app/index.html", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  return res.sendFile(path.join(paths.root, "app", "index.html"));
+});
+app.get("/uat", (_req, res) => {
+  res.setHeader("Cache-Control", "no-store");
+  return res.sendFile(path.join(paths.root, "app", "index.html"));
+});
 
 app.get("/api/health", async (_req, res) => {
   const db = await store.read();
