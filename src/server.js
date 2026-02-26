@@ -250,21 +250,21 @@ app.use("/docs", express.static(path.join(paths.root, "docs")));
 
 app.get("/", (_req, res) => res.redirect("/app"));
 
-app.get("/app/login", (_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  return res.sendFile(path.join(paths.root, "app", "login.html"));
-});
+   app.get("/app/login", (_req, res) => {
+   res.setHeader("Cache-Control", "no-store");
+   return res.sendFile("login.html", { root: path.join(paths.root, "app") });
+   });
 
-app.get("/app/share.html", (_req, res) => {
-  res.setHeader("Cache-Control", "no-store");
-  return res.sendFile(path.join(paths.root, "app", "share.html"));
-});
+   app.get("/app/share.html", (_req, res) => {
+   res.setHeader("Cache-Control", "no-store");
+   return res.sendFile("share.html", { root: path.join(paths.root, "app") });
+   });
 
 async function serveOwnerApp(req, res) {
   const db = await store.read();
   if (!sessionFromReq(req, db)) return res.redirect("/app/login");
   res.setHeader("Cache-Control", "no-store");
-  return res.sendFile(path.join(paths.root, "app", "index.html"));
+  return res.sendFile("index.html", { root: path.join(paths.root, "app") });
 }
 
 app.get("/app", serveOwnerApp);

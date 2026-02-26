@@ -1,0 +1,1114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Alpha — Owner Experience</title>
+    <style>
+      :root {
+        --bg: #0d1424;
+        --panel: rgba(20, 31, 56, 0.84);
+        --panel-2: rgba(16, 24, 44, 0.95);
+        --text: #e8efff;
+        --muted: #aebcde;
+        --line: #2e3e69;
+        --accent: #83afff;
+        --danger: #ff7380;
+        --radius: 14px;
+        --card-size: 200px;
+        --card-gap: 16px;
+
+        /* Gradients */
+        --grad-1: rgba(86, 125, 210, 0.28);
+        --grad-2: rgba(110, 84, 185, 0.22);
+        --bg-top: #111b33;
+        --bg-mid: #0d1424;
+        --bg-bot: #0a1120;
+        --accent-bg: linear-gradient(145deg, rgba(30, 49, 90, 0.8), rgba(18, 31, 60, 0.86));
+      }
+
+      [data-theme="light"] {
+        --bg: #f2f5f9;
+        --panel: rgba(255, 255, 255, 0.85);
+        --panel-2: #ffffff;
+        --text: #1a1f36;
+        --muted: #5e6c84;
+        --line: #dce3f0;
+        --accent: #2e60ff;
+        --grad-1: rgba(46, 96, 255, 0.08);
+        --grad-2: rgba(46, 96, 255, 0.04);
+        --bg-top: #f8faff;
+        --bg-mid: #f2f5f9;
+        --bg-bot: #ebf0f7;
+        --accent-bg: linear-gradient(145deg, rgba(46, 96, 255, 0.1), rgba(46, 96, 255, 0.05));
+      }
+
+      [data-theme="oled"] {
+        --bg: #000000;
+        --panel: rgba(18, 18, 18, 0.8);
+        --panel-2: #0a0a0a;
+        --line: #1a1a1a;
+        --grad-1: rgba(0, 0, 0, 0);
+        --grad-2: rgba(0, 0, 0, 0);
+        --bg-top: #000000;
+        --bg-mid: #000000;
+        --bg-bot: #000000;
+        --accent-bg: linear-gradient(145deg, #111111, #000000);
+      }
+
+      [data-theme="nord"] {
+        --bg: #2e3440;
+        --panel: rgba(59, 66, 82, 0.8);
+        --panel-2: #434c5e;
+        --text: #eceff4;
+        --muted: #d8dee9;
+        --line: #4c566a;
+        --accent: #88c0d0;
+        --grad-1: rgba(136, 192, 208, 0.1);
+        --grad-2: rgba(143, 188, 187, 0.05);
+        --bg-top: #3b4252;
+        --bg-mid: #2e3440;
+        --bg-bot: #2e3440;
+        --accent-bg: linear-gradient(145deg, #4c566a, #3b4252);
+      }
+
+      [data-theme="forest"] {
+        --bg: #1a1c19;
+        --panel: rgba(26, 29, 25, 0.8);
+        --panel-2: #232621;
+        --text: #e2e3dd;
+        --muted: #c6c7c1;
+        --line: #3d3f3a;
+        --accent: #a4c99e;
+        --grad-1: rgba(164, 201, 158, 0.08);
+        --grad-2: rgba(164, 201, 158, 0.04);
+        --bg-top: #1a1c19;
+        --bg-mid: #141613;
+        --bg-bot: #141613;
+        --accent-bg: linear-gradient(145deg, #2a2d28, #1a1c19);
+      }
+
+      [data-view="standard"] { --card-size: 200px; --card-gap: 16px; }
+      [data-view="comfortable"] { --card-size: 260px; --card-gap: 24px; }
+      [data-view="compact"] { --card-size: 140px; --card-gap: 8px; }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        color: var(--text);
+        min-height: 100vh;
+        background-color: var(--bg);
+        background-image:
+          radial-gradient(1200px 700px at 15% -20%, var(--grad-1), rgba(0,0,0,0) 60%),
+          radial-gradient(900px 600px at 85% 0%, var(--grad-2), rgba(0,0,0,0) 58%),
+          linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 56%, var(--bg-bot) 100%);
+        background-attachment: fixed;
+        -webkit-font-smoothing: antialiased;
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+        opacity: 0.075;
+        mix-blend-mode: soft-light;
+        z-index: 0;
+      }
+      header, .wrap { position: relative; z-index: 1; }
+      header {
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+        z-index: 40;
+      }
+      .header-inner {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+      }
+      .title { font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+      .muted { color: var(--muted); }
+      .wrap { max-width: 1200px; margin: 0 auto; padding: 24px; padding-bottom: 120px; }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      .tab {
+        background: transparent;
+        color: var(--muted);
+        border: 1px solid transparent;
+        border-radius: 999px;
+        padding: 8px 16px;
+        font-weight: 500;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 150ms ease;
+      }
+      .tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+      .tab.active { background: var(--panel-2); color: var(--accent); border-color: var(--line); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+      section {
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      h2 { margin: 0 0 16px; font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; }
+      
+      .row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+      
+      input, select, button, textarea {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel-2);
+        color: var(--text);
+        padding: 10px 14px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(131, 175, 255, 0.15); }
+      input, select, textarea { min-width: 200px; }
+      
+      button { 
+        cursor: pointer; 
+        font-weight: 500; 
+        background: var(--panel);
+      }
+      button:hover { background: var(--panel-2); border-color: color-mix(in srgb, var(--line) 80%, white 20%); }
+      button.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+      button.primary:hover { background: color-mix(in srgb, var(--accent) 90%, white 10%); }
+      button.danger { border-color: var(--danger); color: var(--danger); background: transparent; }
+      button.danger:hover { background: var(--danger); color: #fff; }
+
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(var(--card-size), 1fr));
+        grid-auto-rows: var(--card-size);
+        gap: var(--card-gap);
+      }
+      .card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        overflow: hidden;
+        background: var(--panel-2);
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.2s;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        isolation: isolate;
+      }
+      .card.feature { grid-column: span 2; grid-row: span 2; }
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25);
+        border-color: color-mix(in srgb, var(--line) 70%, white 30%);
+      }
+      .card.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent), 0 16px 32px rgba(0,0,0,0.2);
+      }
+      .thumb {
+        flex: 1;
+        background: rgba(0,0,0,0.3);
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        position: relative;
+      }
+      .thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease; }
+      .card:hover .thumb img, .card:hover .thumb video { transform: scale(1.03); }
+      
+      .card-body { 
+        padding: 12px; 
+        font-size: 0.85rem; 
+        background: var(--panel-2); 
+        border-top: 1px solid var(--line);
+        z-index: 1;
+      }
+      
+      .pill {
+        display: inline-block;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        padding: 3px 8px;
+        margin-right: 6px;
+        margin-bottom: 6px;
+        color: var(--muted);
+        background: var(--panel);
+      }
+
+      /* Polished Actions */
+      .library-card-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        gap: 8px;
+        z-index: 10;
+        opacity: 0;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        transform: translateY(-4px);
+      }
+      .card:hover .library-card-actions,
+      .card.selected .library-card-actions {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .icon-btn, .select-chip {
+        width: 32px;
+        height: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        border-radius: 8px;
+        background: rgba(10, 15, 25, 0.6);
+        color: white;
+        cursor: pointer;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transition: all 0.2s ease;
+        padding: 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      }
+      .icon-btn:hover { background: var(--danger); border-color: var(--danger); transform: scale(1.05); }
+      .icon-btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+      .select-chip:hover { background: rgba(255, 255, 255, 0.15); }
+      .select-chip input { display: none; }
+      .select-chip svg {
+        width: 18px;
+        height: 18px;
+        fill: none;
+        stroke: white;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        opacity: 0;
+        transform: scale(0.5);
+        transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .select-chip input:checked + svg { opacity: 1; transform: scale(1); }
+      .card.selected .select-chip { background: var(--accent); border-color: var(--accent); }
+      .card.selected .select-chip svg { stroke: #000; }
+
+      .bulk-action-bar {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 999px;
+        padding: 12px 16px 12px 24px;
+        background: rgba(20, 31, 56, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0,0,0,0.2);
+        animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      @keyframes slideUp { from { transform: translate(-50%, 100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+
+      .list { display: grid; gap: 12px; }
+      .list-item {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 16px;
+        background: var(--panel);
+        transition: border-color 0.2s;
+      }
+      .list-item:hover { border-color: color-mix(in srgb, var(--line) 80%, white 20%); }
+
+      .hidden { display: none !important; }
+      pre {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel-2);
+        padding: 12px;
+        max-height: 260px;
+        overflow: auto;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85rem;
+        line-height: 1.5;
+      }
+
+      .split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+      .home-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; }
+      .home-card {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 20px;
+        background: var(--panel);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      }
+      .span-12 { grid-column: span 12; }
+      .span-8 { grid-column: span 8; }
+      .span-6 { grid-column: span 6; }
+      .span-4 { grid-column: span 4; }
+
+      .mini { font-size: 0.85rem; }
+      .success { color: #9fe3b5; }
+      
+      .cta-hero {
+        border: 1px solid rgba(131, 175, 255, 0.3);
+        background: var(--accent-bg);
+      }
+
+      .empty-state {
+        border: 2px dashed var(--line);
+        border-radius: 16px;
+        padding: 48px 24px;
+        text-align: center;
+        background: rgba(14, 22, 42, 0.4);
+      }
+      .empty-state strong { display: block; margin-bottom: 8px; font-size: 1.1rem; }
+      .empty-state .muted { max-width: 480px; margin: 0 auto 20px; line-height: 1.5; }
+
+      /* Responsive adjustments */
+      @media (max-width: 960px) {
+        .split { grid-template-columns: 1fr; }
+        .span-8, .span-6, .span-4 { grid-column: span 12; }
+      }
+
+      @media (max-width: 768px) {
+        .header-inner { padding: 16px; flex-direction: column; align-items: flex-start; gap: 8px; }
+        .wrap { padding: 16px; padding-bottom: 120px; }
+        .tabs {
+          flex-wrap: nowrap;
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+          margin: 0 -16px 20px;
+          padding: 0 16px 12px;
+          border-bottom: 1px solid var(--line);
+          scrollbar-width: none;
+        }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab { white-space: nowrap; }
+        .row { flex-direction: column; align-items: stretch; gap: 10px; }
+        .row > * { width: 100%; }
+        .home-grid { display: flex; flex-direction: column; }
+        .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: auto; }
+        .card.feature { grid-column: span 1; grid-row: span 1; }
+        .library-card-actions { opacity: 1; transform: translateY(0); }
+        .thumb { aspect-ratio: 1/1; height: auto; }
+        .bulk-action-bar {
+          width: calc(100% - 32px);
+          bottom: 16px;
+          padding: 12px;
+          flex-direction: column;
+          border-radius: 16px;
+        }
+        .bulk-action-bar .row { width: 100%; flex-direction: row; }
+      }
+
+      @media (max-width: 480px) {
+        .cards { grid-template-columns: 1fr; }
+        .thumb { aspect-ratio: 4/3; }
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="header-inner">
+        <div>
+          <div class="title">Alpha — Owner Site</div>
+          <div class="muted mini" style="margin-top:2px;">Import, relive, and share your moments.</div>
+        </div>
+        <div id="healthBadge" class="muted mini">Checking health…</div>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="tabs">
+        <button class="tab active" data-tab="home">Home</button>
+        <button class="tab" data-tab="import">Import</button>
+        <button class="tab" data-tab="library">Library</button>
+        <button class="tab" data-tab="albums">Albums</button>
+        <button class="tab" data-tab="sharing">Sharing</button>
+        <button class="tab" data-tab="settings">Settings</button>
+      </div>
+
+      <section id="tab-home">
+        <div id="homeEmptyState" class="hidden"></div>
+        <div id="homeContent" class="home-grid">
+          <div class="home-card cta-hero span-12">
+            <div><strong>Import your next story</strong></div>
+            <div class="muted mini" style="margin: 6px 0 16px;">Upload a batch, pick album behavior, and get straight to browse + share.</div>
+            <div class="row" style="flex-direction: row; width: fit-content;">
+              <button class="primary" id="homeStartImportBtn">Import Photos</button>
+              <button id="homeOpenTimelineBtn">View Library</button>
+            </div>
+            <div class="row" id="statsRow" style="margin-top: 16px; margin-bottom: 0;"></div>
+          </div>
+
+          <div class="home-card span-12">
+            <div><strong>Continue where you left off</strong></div>
+            <div id="homeLastImport" class="muted mini" style="margin: 8px 0 16px;">Checking recent import…</div>
+            <div class="row" style="flex-direction: row; width: fit-content;">
+              <button id="homeOpenImportTabBtn">Open Import</button>
+              <button id="homeOpenSharingTabBtn">Open Sharing</button>
+              <button id="homeRefreshBtn">Refresh Data</button>
+            </div>
+          </div>
+
+          <div class="home-card span-8">
+            <div><strong>Recent stories</strong></div>
+            <div id="homeRecentAlbums" class="list" style="margin-top: 12px;"></div>
+          </div>
+
+          <div class="home-card span-4">
+            <div><strong>Library at a glance</strong></div>
+            <div id="homeAtGlance" class="mini muted" style="margin: 12px 0 16px;">Loading summary…</div>
+            <div class="row" style="flex-direction: column;">
+              <button id="homeOpenAlbumsBtn">Manage Albums</button>
+              <button id="homeOpenSharingBtn">Manage Shares</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-import" class="hidden">
+        <h2>Import Experience</h2>
+        <div class="row">
+          <input id="importFiles" type="file" multiple />
+          <select id="importRule">
+            <option value="day_imported">Album by import day</option>
+            <option value="day_taken">Album by taken day</option>
+            <option value="new_name">Album by custom name</option>
+          </select>
+          <input id="importAlbumName" placeholder="Custom album name" />
+          <button class="primary" id="runImportBtn">Upload + Import</button>
+        </div>
+        <div class="muted mini">This owner flow is explicit staging + import in one guided action.</div>
+        <div id="importPrepStatus" class="mini muted" style="margin-top:12px;">No files selected yet.</div>
+        <progress id="importPrepProgress" max="100" value="0" style="width:100%; height:8px; border-radius:4px; margin-top:12px; display:none;"></progress>
+        
+        <div id="importResultPanel" class="list-item" style="display:none; margin:16px 0;"></div>
+        
+        <details style="margin-top: 16px;">
+          <summary class="mini muted" style="cursor: pointer; padding: 8px 0;">View technical logs</summary>
+          <pre id="importOut" style="margin-top: 8px;">(import log)</pre>
+        </details>
+      </section>
+
+      <section id="tab-library" class="hidden">
+        <h2>Library Timeline</h2>
+        <div class="row">
+          <select id="libGroupBy">
+            <option value="day_taken">Group by day taken</option>
+            <option value="day_imported">Group by day imported</option>
+          </select>
+          <select id="libType">
+            <option value="">All media</option>
+            <option value="photo">Photos only</option>
+            <option value="video">Videos only</option>
+          </select>
+          <input id="libSearch" placeholder="Search filename" />
+          <button class="primary" id="refreshLibraryBtn">Refresh</button>
+        </div>
+        <div id="timelineContainer" class="list" style="margin-top: 16px;"></div>
+      </section>
+
+      <section id="tab-albums" class="hidden">
+        <h2>Album Studio</h2>
+        <div class="split">
+          <div>
+            <div class="row">
+              <input id="newAlbumName" placeholder="New album name" />
+              <button class="primary" id="createAlbumBtn">Create</button>
+            </div>
+            <div id="albumList" class="list" style="margin-top: 12px;"></div>
+          </div>
+          <div>
+            <div class="row">
+              <select id="selectedAlbumPicker"></select>
+              <button id="loadAlbumBtn">Open Album</button>
+            </div>
+            <div class="row">
+              <input id="renameAlbumName" placeholder="Rename selected album" />
+              <button id="renameAlbumBtn">Rename</button>
+              <button class="danger" id="deleteAlbumBtn">Delete</button>
+            </div>
+            <div id="albumAssets" class="cards" style="margin-top: 12px;"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-sharing" class="hidden">
+        <h2>Sharing Studio</h2>
+        <div class="row">
+          <select id="shareAlbumId"></select>
+          <input id="sharePassword" placeholder="Optional password" />
+          <input id="shareExpiresAt" placeholder="Optional expiry (ISO)" />
+          <button class="primary" id="createShareBtn">Create Share Link</button>
+        </div>
+        <div id="shareList" class="list" style="margin-top: 16px;"></div>
+        <div id="shareOut" class="mini muted" style="margin-top: 12px;"></div>
+      </section>
+
+      <section id="tab-settings" class="hidden">
+        <h2>Owner Settings</h2>
+        <div class="home-grid">
+          <div class="home-card span-6">
+            <div><strong>Appearance</strong></div>
+            <div class="muted mini" style="margin: 8px 0 16px;">Customize the visual theme and density of your library.</div>
+            <div class="row">
+              <select id="setTheme" style="flex:1;">
+                <option value="dark">Deep Blue (Default)</option>
+                <option value="light">Solar Light</option>
+                <option value="oled">Midnight (OLED)</option>
+                <option value="nord">Nordic Frost</option>
+                <option value="forest">Silent Forest</option>
+              </select>
+            </div>
+            <div class="row">
+              <select id="setViewMode" style="flex:1;">
+                <option value="comfortable">Comfortable (Heroic)</option>
+                <option value="grid">Standard Grid</option>
+                <option value="compact">Compact (Dense)</option>
+              </select>
+            </div>
+          </div>
+          <div class="home-card span-6">
+            <div><strong>Library Defaults</strong></div>
+            <div class="muted mini" style="margin: 8px 0 16px;">Default behaviors for browsing and organization.</div>
+            <div class="row">
+              <select id="setGrouping" style="flex:1;">
+                <option value="day_taken">Group by Day Taken</option>
+                <option value="day_imported">Group by Day Imported</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="span-12 row" style="justify-content: flex-end; align-items: center; margin-bottom: 0;">
+            <span id="settingsStatus" class="mini muted"></span>
+            <button class="primary" id="saveSettingsBtn">Save Settings</button>
+          </div>
+
+          <div class="home-card span-12" style="margin-top: 12px;">
+            <div><strong>Maintenance (M5)</strong></div>
+            <div class="muted mini" style="margin: 8px 0 16px;">Manage background workers and storage health.</div>
+            <div class="row" style="flex-direction: row; width: fit-content;">
+              <button id="runWorkerBtn">Run Conversion Worker</button>
+              <button id="resetFailedJobsBtn" class="danger">Reset Failed Jobs</button>
+              <button id="refreshStatsBtn">Refresh Stats</button>
+            </div>
+            <div id="m5Status" class="mini muted" style="margin-top: 8px;"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const state = {
+        albums: [],
+        selectedLibraryAssets: new Set(),
+      };
+
+      function $(id) { return document.getElementById(id); }
+      function esc(s) { return String(s ?? "").replace(/[&<>\"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
+      function formatRelativeTime(iso) {
+        if (!iso) return 'unknown time';
+        const diffMs = Date.now() - new Date(iso).getTime();
+        const minutes = Math.round(diffMs / 60000);
+        if (minutes < 1) return 'just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 48) return `${hours}h ago`;
+        const days = Math.round(hours / 24);
+        return `${days}d ago`;
+      }
+
+      function nextTick() { return new Promise((resolve) => setTimeout(resolve, 0)); }
+
+      function updateImportSelectionSummary() {
+        const files = $('importFiles').files;
+        if (!files?.length) {
+          $('importPrepStatus').textContent = 'No files selected yet.';
+          $('importPrepProgress').style.display = 'none';
+          $('importPrepProgress').value = 0;
+          return;
+        }
+        const sample = Array.from(files).slice(0, 3).map((f) => f.name).join(', ');
+        const extra = files.length > 3 ? ` +${files.length - 3} more` : '';
+        $('importPrepStatus').textContent = `Ready to import ${files.length} files. Sample: ${sample}${extra}`;
+      }
+
+      async function appendFilesInBatches(fd, files, onProgress) {
+        const total = files.length;
+        const batchSize = 25;
+        for (let i = 0; i < total; i++) {
+          fd.append('files', files[i]);
+          const completed = i + 1;
+          if (onProgress) onProgress(completed, total);
+          if (completed % batchSize === 0) await nextTick();
+        }
+      }
+
+      function uploadBatchWithProgress(formData, onProgress) {
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/api/staging/upload');
+          xhr.responseType = 'json';
+          xhr.upload.onprogress = (evt) => {
+            if (!evt.lengthComputable || !onProgress) return;
+            onProgress(evt.loaded, evt.total);
+          };
+          xhr.onload = () => {
+            const body = xhr.response || (() => { try { return JSON.parse(xhr.responseText); } catch { return { raw: xhr.responseText }; } })();
+            if (xhr.status >= 200 && xhr.status < 300) resolve(body);
+            else reject(new Error(body?.error || `Upload failed (${xhr.status})`));
+          };
+          xhr.onerror = () => reject(new Error('Network error during upload'));
+          xhr.send(formData);
+        });
+      }
+
+      function appendImportLog(line) {
+        const stamp = new Date().toLocaleTimeString();
+        const current = $('importOut').textContent || '';
+        $('importOut').textContent = `${current}\n[${stamp}] ${line}`.trim();
+      }
+
+      async function api(url, options = {}) {
+        const res = await fetch(url, {
+          headers: { "Content-Type": "application/json", ...(options.headers || {}) },
+          ...options,
+        });
+        const text = await res.text();
+        let body;
+        try { body = JSON.parse(text); } catch { body = { raw: text }; }
+        if (!res.ok) throw new Error(body.error || JSON.stringify(body));
+        return body;
+      }
+
+      function setTab(tab) {
+        document.querySelectorAll(".tab").forEach((btn) => btn.classList.toggle("active", btn.dataset.tab === tab));
+        ["home", "import", "library", "albums", "sharing", "settings"].forEach((name) => {
+          $(`tab-${name}`).classList.toggle("hidden", name !== tab);
+        });
+        window.scrollTo(0,0);
+      }
+
+      document.querySelectorAll(".tab").forEach((btn) => btn.onclick = () => setTab(btn.dataset.tab));
+
+      function bindEmptyStateCtas() {
+        document.querySelectorAll('[data-empty-cta]').forEach((btn) => {
+          btn.onclick = () => setTab(btn.dataset.emptyCta);
+        });
+      }
+
+      function mediaCard(asset, index = 0, includeActions = false) {
+        const isVideo = asset.type === "video";
+        const isFeature = (index % 7 === 0);
+        const media = isVideo
+          ? `<video src="${asset.previewUrl}" controls muted preload="metadata"></video>`
+          : `<img src="${asset.previewUrl}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
+
+        const actions = includeActions
+          ? `<div class="library-card-actions">
+               <button data-remove="${asset.id}" class="icon-btn" title="Remove from album">✕</button>
+             </div>`
+          : '';
+
+        return `
+          <div class="card ${isFeature ? 'feature' : ''}">
+            ${actions}
+            <div class="thumb">${media}</div>
+            <div class="card-body">
+              <div class="mini"><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown")}</span></div>
+              <div class="muted mini" style="margin-top:2px;">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      function emptyState(title, body, ctaText, ctaTab, ctaId) {
+        return `
+          <div class="empty-state">
+            <strong>${esc(title)}</strong>
+            <div class="muted mini">${esc(body)}</div>
+            <button class="primary" data-empty-cta="${esc(ctaTab)}" id="${esc(ctaId)}">${esc(ctaText)}</button>
+          </div>
+        `;
+      }
+
+      function libraryMediaCard(asset, index = 0) {
+        const isVideo = asset.type === "video";
+        const isFeature = (index % 7 === 0);
+        const selected = state.selectedLibraryAssets.has(asset.id);
+        const media = isVideo
+          ? `<video src="${asset.previewUrl}" controls muted preload="metadata"></video>`
+          : `<img src="${asset.previewUrl}" alt="asset preview" loading="lazy" onerror="this.style.display='none';this.parentElement.innerHTML='<span class=muted>Preview unavailable</span>'" />`;
+
+        return `
+          <div class="card ${isFeature ? 'feature' : ''} ${selected ? 'selected' : ''}" data-library-card="${asset.id}">
+            <div class="library-card-actions">
+              <label class="select-chip" title="Select item">
+                <input type="checkbox" data-select-asset="${asset.id}" ${selected ? 'checked' : ''} />
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              </label>
+              <button data-delete-asset="${asset.id}" class="icon-btn" title="Delete forever">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              </button>
+            </div>
+            <div class="thumb">${media}</div>
+            <div class="card-body">
+              <div class="mini"><span class="pill">${esc(asset.type)}</span><span class="pill">${esc(asset.cameraModel || "Unknown")}</span></div>
+              <div class="muted mini" style="margin-top:2px;">${esc(asset.takenAt || asset.importedAt || "No date")}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderBulkActionBar() {
+        const count = state.selectedLibraryAssets.size;
+        if (!count) return '';
+        return `
+          <div class="bulk-action-bar" id="libraryBulkBar">
+            <div><strong style="font-size:1.1rem;">${count}</strong> <span class="muted">selected</span></div>
+            <div class="row" style="margin:0; flex-wrap:nowrap;">
+              <button id="clearLibrarySelectionBtn">Cancel</button>
+              <button class="danger" id="deleteSelectedLibraryBtn">Delete Selected</button>
+            </div>
+          </div>
+        `;
+      }
+
+      async function refreshStats() {
+        try {
+          const [health, summary] = await Promise.all([api('/api/health'), api('/api/library/summary')]);
+          $('healthBadge').textContent = `Service healthy · ${health.stats.assets} assets`;
+          $('statsRow').innerHTML = `
+            <span class="pill">Assets: ${summary.assets}</span>
+            <span class="pill">Albums: ${summary.albums}</span>
+            <span class="pill">Shares: ${summary.shares}</span>
+            <span class="pill">Imports: ${summary.imports}</span>
+          `;
+        } catch (error) {
+          $('healthBadge').textContent = `Service offline: ${error.message}`;
+        }
+      }
+
+      async function refreshHomeExperience() {
+        try {
+          const [summary, recentImports, recentAlbums] = await Promise.all([
+            api('/api/library/summary'),
+            api('/api/imports/recent?limit=1'),
+            api('/api/albums?page=1&pageSize=6'),
+          ]);
+
+          const isEmpty = !summary.assets && !summary.imports;
+          $('homeEmptyState').classList.toggle('hidden', !isEmpty);
+          $('homeContent').classList.toggle('hidden', isEmpty);
+
+          if (isEmpty) {
+            $('homeEmptyState').innerHTML = emptyState(
+              'Welcome to Alpha',
+              'Your library is currently empty. To get started, import your first batch of photos or videos.',
+              'Get Started: Import Photos',
+              'import',
+              'homeEmptyGoImportBtn'
+            );
+            bindEmptyStateCtas();
+            return;
+          }
+
+          const latest = recentImports.items?.[0];
+          $('homeLastImport').innerHTML = latest
+            ? `Last import <strong>${formatRelativeTime(latest.createdAt)}</strong> · ${latest.counts.logicalAssetsCreated} assets`
+            : 'No imports yet.';
+
+          $('homeAtGlance').innerHTML = `Assets <strong>${summary.assets}</strong> · Albums <strong>${summary.albums}</strong> · Shares <strong>${summary.shares}</strong>`;
+
+          const albums = recentAlbums.items || [];
+          $('homeRecentAlbums').innerHTML = albums.length
+            ? albums.map((a) => `
+              <div class="list-item mini row" style="justify-content:space-between; margin-bottom:8px;">
+                <div><strong>${esc(a.name)}</strong> <div class="muted" style="margin-top:4px;">${a.assetCount} assets</div></div>
+                <div class="row" style="margin:0;">
+                  <button data-home-open-album="${a.id}">Open</button>
+                  <button data-home-share-album="${a.id}">Share</button>
+                </div>
+              </div>`).join('')
+            : '<div class="muted mini">No albums yet.</div>';
+
+          document.querySelectorAll('[data-home-open-album]').forEach((btn) => {
+            btn.onclick = () => { $('selectedAlbumPicker').value = btn.dataset.homeOpenAlbum; setTab('albums'); loadAlbum(); };
+          });
+          document.querySelectorAll('[data-home-share-album]').forEach((btn) => {
+            btn.onclick = () => { $('shareAlbumId').value = btn.dataset.homeShareAlbum; setTab('sharing'); };
+          });
+
+        } catch (error) {
+          $('homeLastImport').textContent = `Error: ${error.message}`;
+        }
+      }
+
+      function renderImportResultPanel(upload, importLog) {
+        const panel = $('importResultPanel');
+        panel.style.display = 'block';
+        panel.innerHTML = `
+          <div class="success"><strong>Import complete.</strong> ${importLog.counts.logicalAssetsCreated} assets from ${importLog.counts.totalFilesInBatch} files.</div>
+          <div class="row" style="margin-top:12px;">
+            <button id="importOpenLibraryBtn">View in Library</button>
+            <button id="importOpenCreatedAlbumsBtn">Open Album</button>
+          </div>
+        `;
+        $('importOpenLibraryBtn').onclick = () => { setTab('library'); refreshLibrary(); };
+        $('importOpenCreatedAlbumsBtn').onclick = async () => {
+          await refreshAlbums();
+          if (importLog.createdAlbumIds?.length) {
+            $('selectedAlbumPicker').value = importLog.createdAlbumIds[0];
+            setTab('albums');
+            loadAlbum();
+          } else setTab('albums');
+        };
+      }
+
+      async function runImportFlow() {
+        const files = $('importFiles').files;
+        if (!files.length) return $('importOut').textContent = 'Select files first.';
+
+        const runBtn = $('runImportBtn');
+        const progress = $('importPrepProgress');
+        const status = $('importPrepStatus');
+        runBtn.disabled = true;
+        progress.style.display = 'block'; progress.value = 0;
+        $('importOut').textContent = '';
+        status.textContent = `Preparing ${files.length} files...`;
+
+        const fd = new FormData();
+        let lastPaint = 0;
+        const onPrepProgress = (c, total) => {
+          const now = performance.now();
+          if (c !== total && now - lastPaint < 80) return;
+          lastPaint = now;
+          progress.value = Math.round((c / total) * 100);
+          status.textContent = `Preparing... ${c}/${total} files`;
+        };
+        const onUploadProgress = (l, t) => {
+          const now = performance.now();
+          if (now - lastPaint < 80) return;
+          lastPaint = now;
+          progress.value = t ? Math.round((l / t) * 100) : 0;
+          status.textContent = `Uploading... ${progress.value}%`;
+        };
+
+        try {
+          await appendFilesInBatches(fd, files, onPrepProgress);
+          progress.value = 0; status.textContent = `Uploading... 0%`;
+          const upload = await uploadBatchWithProgress(fd, onUploadProgress);
+          status.textContent = 'Processing import...';
+          const importLog = await api(`/api/imports/${upload.batchId}/execute`, {
+            method: 'POST',
+            body: JSON.stringify({ createAlbums: true, rule: $('importRule').value, albumName: $('importAlbumName').value || null }),
+          });
+          $('importOut').textContent = JSON.stringify({ upload, importLog }, null, 2);
+          renderImportResultPanel(upload, importLog);
+          status.textContent = `Import complete!`;
+          await Promise.all([refreshStats(), refreshAlbums(), refreshLibrary(), refreshHomeExperience()]);
+        } catch (error) {
+          $('importOut').textContent = `Error: ${error.message}`;
+          status.textContent = `Failed: ${error.message}`;
+        } finally {
+          runBtn.disabled = false;
+          setTimeout(() => { progress.style.display = 'none'; }, 1000);
+        }
+      }
+
+      async function refreshLibrary() {
+        try {
+          const timeline = await api(`/api/library/timeline?groupBy=${encodeURIComponent($('libGroupBy').value)}&type=${encodeURIComponent($('libType').value)}`);
+          const search = $('libSearch').value.trim().toLowerCase();
+          const filtered = search
+            ? timeline.items.map(g => ({ ...g, assets: g.assets.filter(a => a.fileNames?.some(n => n.toLowerCase().includes(search))) })).filter(g => g.assets.length)
+            : timeline.items;
+
+          const vis = new Set(filtered.flatMap(g => g.assets.map(a => a.id)));
+          state.selectedLibraryAssets.forEach(id => { if (!vis.has(id)) state.selectedLibraryAssets.delete(id); });
+
+          const html = filtered.map(g => `
+            <div class="list-item" style="border:none; padding:0; background:transparent;">
+              <h3 style="margin: 0 0 12px; font-size:1.1rem;">${esc(g.day)} <span class="muted" style="font-weight:400; font-size:0.9rem;">(${g.assets.length})</span></h3>
+              <div class="cards">${g.assets.map((a, i) => libraryMediaCard(a, i)).join('')}</div>
+            </div>
+          `).join('');
+
+          $('timelineContainer').innerHTML = html ? `${html}${renderBulkActionBar()}` : emptyState('Library is empty', 'Nothing to show here.', 'Import Photos', 'import', 'libEmptyBtn');
+          bindEmptyStateCtas();
+
+          document.querySelectorAll('[data-select-asset]').forEach(input => {
+            input.onchange = () => {
+              input.checked ? state.selectedLibraryAssets.add(input.dataset.selectAsset) : state.selectedLibraryAssets.delete(input.dataset.selectAsset);
+              refreshLibrary();
+            };
+          });
+
+          document.querySelectorAll('[data-delete-asset]').forEach(btn => {
+            btn.onclick = async (e) => {
+              e.preventDefault();
+              if (!confirm('Permanently delete this item?')) return;
+              try {
+                await api(`/api/library/assets/${btn.dataset.deleteAsset}`, { method: 'DELETE' });
+                state.selectedLibraryAssets.delete(btn.dataset.deleteAsset);
+                await Promise.all([refreshLibrary(), refreshStats(), refreshHomeExperience()]);
+              } catch (err) { alert(`Delete failed: ${err.message}`); }
+            };
+          });
+
+          if ($('clearLibrarySelectionBtn')) $('clearLibrarySelectionBtn').onclick = () => { state.selectedLibraryAssets.clear(); refreshLibrary(); };
+          if ($('deleteSelectedLibraryBtn')) $('deleteSelectedLibraryBtn').onclick = async () => {
+            const ids = Array.from(state.selectedLibraryAssets);
+            if (!ids.length || !confirm(`Permanently delete ${ids.length} selected items?`)) return;
+            try {
+              await api('/api/library/assets/bulk-delete', { method: 'POST', body: JSON.stringify({ assetIds: ids }) });
+              state.selectedLibraryAssets.clear();
+              await Promise.all([refreshLibrary(), refreshStats(), refreshHomeExperience()]);
+            } catch (err) { alert(`Bulk delete failed: ${err.message}`); }
+          };
+        } catch (err) { $('timelineContainer').innerHTML = `<div class="muted">${esc(err.message)}</div>`; }
+      }
+
+      async function refreshAlbums() {
+        try {
+          const res = await api('/api/albums?page=1&pageSize=200');
+          state.albums = res.items;
+          $('albumList').innerHTML = state.albums.map(a => `
+            <div class="list-item row" style="justify-content:space-between;">
+              <div><strong>${esc(a.name)}</strong> <div class="muted mini">${a.assetCount} assets</div></div>
+              <div class="row" style="margin:0;"><button data-select-album="${a.id}">Open</button></div>
+            </div>
+          `).join('') || emptyState('No albums', 'Create one after importing.', 'Library', 'library', 'albEmptyBtn');
+          bindEmptyStateCtas();
+
+          const opts = ['<option value="">Select album…</option>', ...state.albums.map(a => `<option value="${a.id}">${esc(a.name)}</option>`)].join('');
+          $('selectedAlbumPicker').innerHTML = opts;
+          $('shareAlbumId').innerHTML = opts;
+
+          document.querySelectorAll('[data-select-album]').forEach(btn => {
+            btn.onclick = () => { $('selectedAlbumPicker').value = btn.dataset.selectAlbum; loadAlbum(); };
+          });
+        } catch (err) { $('albumList').innerHTML = `<div class="muted">${esc(err.message)}</div>`; }
+      }
+
+      async function loadAlbum() {
+        const id = $('selectedAlbumPicker').value.trim();
+        if (!id) return;
+        try {
+          const album = await api(`/api/albums/${id}`);
+          $('renameAlbumName').value = album.name;
+          $('albumAssets').innerHTML = album.assets.map((a, i) => mediaCard(a, i, true)).join('') || emptyState('Album is empty', 'Add items from library.', 'Library', 'library', 'albDetEmptyBtn');
+          bindEmptyStateCtas();
+          document.querySelectorAll('[data-remove]').forEach(btn => {
+            btn.onclick = async () => {
+              await api(`/api/albums/${id}/assets/${btn.dataset.remove}`, { method: 'DELETE' });
+              loadAlbum(); refreshAlbums();
+            };
+          });
+        } catch (err) { $('albumAssets').innerHTML = `<div class="muted">${esc(err.message)}</div>`; }
+      }
+
+      async function createShare() {
+        try {
+          const share = await api(`/api/shares/albums/${$('shareAlbumId').value}`, {
+            method: 'POST', body: JSON.stringify({ password: $('sharePassword').value || null, expiresAt: $('shareExpiresAt').value || null })
+          });
+          $('shareOut').textContent = `Created! Link: ${location.origin}${share.publicPageUrl}`;
+          refreshShares();
+        } catch (err) { $('shareOut').textContent = `Error: ${err.message}`; }
+      }
+
+      async function refreshShares() {
+        try {
+          const res = await api('/api/shares');
+          $('shareList').innerHTML = res.items.map(s => `
+            <div class="list-item row" style="justify-content:space-between; align-items:flex-start;">
+              <div>
+                <strong>${esc(s.albumName)}</strong>
+                <div class="muted mini" style="margin-top:4px;">${s.requiresPassword ? 'Password' : 'Open'} · ${s.isExpired ? 'Expired' : 'Active'}</div>
+                <div style="margin-top:8px;"><a href="${s.publicPageUrl}" target="_blank" style="font-size:0.9rem;">${location.origin}${s.publicPageUrl}</a></div>
+              </div>
+              <button class="danger" data-revoke-share="${s.id}">Revoke</button>
+            </div>
+          `).join('') || '<div class="muted">No active shares.</div>';
+
+          document.querySelectorAll('[data-revoke-share]').forEach(btn => {
+            btn.onclick = async () => { await api(`/api/shares/${btn.dataset.revokeShare}`, { method: 'DELETE' }); refreshShares(); };
+          });
+        } catch (err) { $('shareList').innerHTML = `<div class="muted">${esc(err.message)}</div>`; }
+      }
+
+      async function loadSettings() {
+        try {
+          const settings = await api('/api/owner/settings');
+          $('setTheme').value = settings.theme; $('setViewMode').value = settings.viewMode; $('setGrouping').value = settings.defaultGrouping;
+          document.documentElement.setAttribute('data-theme', settings.theme);
+          document.documentElement.setAttribute('data-view', settings.viewMode);
+          $('libGroupBy').value = settings.defaultGrouping;
+        } catch (err) {}
+      }
+
+      $('homeStartImportBtn').onclick = () => setTab('import');
+      $('homeOpenTimelineBtn').onclick = () => { setTab('library'); refreshLibrary(); };
+      $('homeOpenImportTabBtn').onclick = () => setTab('import');
+      $('homeOpenSharingTabBtn').onclick = () => setTab('sharing');
+      $('homeOpenAlbumsBtn').onclick = () => setTab('albums');
+      $('homeOpenSharingBtn').onclick = () => setTab('sharing');
+      $('homeRefreshBtn').onclick = () => Promise.all([refreshStats(), refreshHomeExperience()]);
+      $('importFiles').onchange = updateImportSelectionSummary;
+      $('runImportBtn').onclick = runImportFlow;
+      $('refreshLibraryBtn').onclick = refreshLibrary;
+      $('createAlbumBtn').onclick = async () => { await api('/api/albums', { method: 'POST', body: JSON.stringify({ name: $('newAlbumName').value }) }); $('newAlbumName').value = ''; refreshAlbums(); };
+      $('loadAlbumBtn').onclick = loadAlbum;
+      $('renameAlbumBtn').onclick = async () => { await api(`/api/albums/${$('selectedAlbumPicker').value}`, { method: 'PATCH', body: JSON.stringify({ name: $('renameAlbumName').value }) }); loadAlbum(); refreshAlbums(); };
+      $('deleteAlbumBtn').onclick = async () => { 
+        if(!confirm('Delete album?')) return; 
+        await api(`/api/albums/${$('selectedAlbumPicker').value}?deleteAssets=false`, { method: 'DELETE' }); 
+        $('selectedAlbumPicker').value = ''; $('albumAssets').innerHTML = ''; refreshAlbums(); 
+      };
+      $('createShareBtn').onclick = createShare;
+      $('saveSettingsBtn').onclick = async () => {
+        try {
+          $('settingsStatus').textContent = 'Saving…';
+          const settings = await api('/api/owner/settings', { method: 'PATCH', body: JSON.stringify({ theme: $('setTheme').value, viewMode: $('setViewMode').value, defaultGrouping: $('setGrouping').value }) });
+          document.documentElement.setAttribute('data-theme', settings.theme);
+          document.documentElement.setAttribute('data-view', settings.viewMode);
+          $('settingsStatus').textContent = 'Saved!';
+          setTimeout(() => $('settingsStatus').textContent = '', 2000);
+        } catch (err) { $('settingsStatus').textContent = `Error: ${err.message}`; }
+      };
+
+      $('runWorkerBtn').onclick = async () => { $('m5Status').textContent='Running...'; const res = await api('/api/jobs/derivatives/worker/run', { method: 'POST' }); $('m5Status').textContent=`Done: ${JSON.stringify(res)}`; refreshStats(); };
+      $('resetFailedJobsBtn').onclick = async () => { if(!confirm('Reset failed?')) return; await api('/api/jobs/derivatives/reset-failed', { method: 'POST' }); $('m5Status').textContent='Reset complete.'; refreshStats(); };
+      $('refreshStatsBtn').onclick = async () => { await refreshStats(); $('m5Status').textContent='Stats refreshed.'; };
+
+      Promise.all([refreshStats(), refreshLibrary(), refreshAlbums(), refreshShares(), refreshHomeExperience(), loadSettings()]);
+    </script>
+  </body>
+</html>

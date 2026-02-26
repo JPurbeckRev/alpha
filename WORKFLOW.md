@@ -2,7 +2,7 @@
 
 ## Roles
 - **Designer (Gemini):** Defines solution direction, architecture, UX decisions, and explicit implementation tasks.
-- **Executor (Codex, this agent):** Implements code changes, runs checks, reports outcomes, and commits.
+- **Executor (Codex):** Implements code changes, runs checks, reports outcomes, and commits.
 
 ## Working Agreement
 1. Designer sends a task packet (template below).

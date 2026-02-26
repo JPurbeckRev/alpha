@@ -7,23 +7,33 @@
     <style>
       :root {
         --bg: #0d1424;
-        --line: #2f3f6c;
+        --line: #2e3e69;
         --panel: rgba(20, 31, 56, 0.84);
-        --text: #e6edff;
+        --panel-2: rgba(16, 24, 44, 0.95);
+        --text: #e8efff;
         --muted: #aebcde;
         --accent: #83afff;
+        --danger: #ff7380;
+        
+        --grad-1: rgba(86, 125, 210, 0.28);
+        --grad-2: rgba(110, 84, 185, 0.22);
+        --bg-top: #111b33;
+        --bg-mid: #0d1424;
+        --bg-bot: #0a1120;
       }
+      * { box-sizing: border-box; }
       body {
         margin: 0;
-        font-family: Inter, Segoe UI, Arial, sans-serif;
+        font-family: Inter, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
         color: var(--text);
         min-height: 100vh;
         background-color: var(--bg);
         background-image:
-          radial-gradient(900px 500px at 20% -20%, rgba(88, 124, 200, 0.28), rgba(88, 124, 200, 0) 62%),
-          radial-gradient(820px 540px at 80% 0%, rgba(116, 85, 194, 0.21), rgba(116, 85, 194, 0) 56%),
-          linear-gradient(180deg, #111b33 0%, #0d1424 60%, #0a1120 100%);
+          radial-gradient(1200px 700px at 15% -20%, var(--grad-1), rgba(0,0,0,0) 60%),
+          radial-gradient(900px 600px at 85% 0%, var(--grad-2), rgba(0,0,0,0) 58%),
+          linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 56%, var(--bg-bot) 100%);
         background-attachment: fixed;
+        -webkit-font-smoothing: antialiased;
       }
       body::before {
         content: "";
@@ -33,41 +43,148 @@
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
         opacity: 0.075;
         mix-blend-mode: soft-light;
+        z-index: 0;
       }
-      .wrap { position: relative; z-index: 1; max-width: 980px; margin: 0 auto; padding: 20px; }
-      h1 { margin: 0 0 8px; }
+      .wrap { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+      
+      header {
+        margin-bottom: 24px;
+        text-align: center;
+        animation: fadeIn 0.4s ease;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      h1 { margin: 0 0 8px; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; }
       .muted { color: var(--muted); }
-      .card { border: 1px solid var(--line); border-radius: 12px; background: var(--panel); padding: 14px; margin-bottom: 12px; }
-      .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-      .pill { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:2px 8px; font-size:0.78rem; color:var(--muted); }
-      input, button { border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; background: rgba(15, 23, 42, 0.92); color: var(--text); }
-      button { cursor: pointer; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px; }
-      .item { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: rgba(15, 23, 42, 0.92); transition: transform 200ms ease, box-shadow 200ms ease; }
-      .item:hover { transform: translateY(-4px); box-shadow: 0 12px 24px rgba(3, 8, 20, 0.4); }
-      .thumb { background: #020617; height: 180px; display: grid; place-items: center; }
-      .thumb img, .thumb video { width: 100%; height: 100%; object-fit: cover; }
-      .body { padding: 8px; font-size: 0.9rem; }
-      a { color: var(--accent); }
+      
+      .card { 
+        border: 1px solid var(--line); 
+        border-radius: 16px; 
+        background: var(--panel); 
+        padding: 20px; 
+        margin-bottom: 24px; 
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        animation: fadeIn 0.5s ease;
+      }
+      
+      .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+      
+      .pill { 
+        display:inline-block; 
+        border:1px solid var(--line); 
+        border-radius:6px; 
+        padding:4px 10px; 
+        font-size:0.8rem; 
+        font-weight:500;
+        color:var(--text); 
+        background: rgba(255,255,255,0.05);
+      }
+      
+      input, button { 
+        border: 1px solid var(--line); 
+        border-radius: 10px; 
+        padding: 12px 16px; 
+        background: var(--panel-2); 
+        color: var(--text); 
+        font-family: inherit;
+        font-size: 1rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+      }
+      input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(131, 175, 255, 0.15); }
+      
+      button { cursor: pointer; font-weight: 500; background: var(--panel); }
+      button:hover { background: var(--panel-2); border-color: color-mix(in srgb, var(--line) 80%, white 20%); }
+      button.primary { background: var(--accent); color: #000; border-color: var(--accent); }
+      button.primary:hover { background: color-mix(in srgb, var(--accent) 90%, white 10%); }
+
+      .grid { 
+        display: grid; 
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); 
+        gap: 20px; 
+        animation: fadeIn 0.6s ease;
+      }
+      
+      .item { 
+        border: 1px solid var(--line); 
+        border-radius: 16px; 
+        overflow: hidden; 
+        background: var(--panel-2); 
+        transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, border-color 0.2s; 
+        display: flex;
+        flex-direction: column;
+      }
+      .item:hover { 
+        transform: translateY(-4px); 
+        box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25); 
+        border-color: color-mix(in srgb, var(--line) 70%, white 30%);
+      }
+      
+      .thumb { 
+        background: rgba(0,0,0,0.3); 
+        aspect-ratio: 4/3; 
+        display: grid; 
+        place-items: center; 
+        overflow: hidden;
+      }
+      .thumb img, .thumb video { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: cover; 
+        transition: transform 0.5s ease;
+      }
+      .item:hover .thumb img, .item:hover .thumb video { transform: scale(1.03); }
+      
+      .body { 
+        padding: 12px; 
+        font-size: 0.85rem; 
+        border-top: 1px solid var(--line);
+        background: var(--panel-2);
+        color: var(--muted);
+      }
+      a { color: var(--accent); text-decoration: none; }
+      a:hover { text-decoration: underline; }
+
+      @media (max-width: 640px) {
+        .wrap { padding: 20px 16px; }
+        .grid { grid-template-columns: 1fr; gap: 16px; }
+        .thumb { aspect-ratio: 16/9; }
+        .row { flex-direction: column; align-items: stretch; gap: 12px; }
+        .row > * { width: 100%; }
+        h1 { font-size: 1.6rem; }
+        .pill { display: block; text-align: center; margin-bottom: 4px; }
+      }
     </style>
   </head>
   <body>
     <div class="wrap">
-      <h1 id="title">Shared Album</h1>
-      <p id="subtitle" class="muted">Loading…</p>
+      <header>
+        <h1 id="title">Shared Album</h1>
+        <p id="subtitle" class="muted" style="margin:0; font-size:1.1rem;">Loading…</p>
+      </header>
 
       <div class="card" id="trustCard" style="display:none;">
-        <div class="row" id="trustBadges"></div>
-        <div id="trustMsg" class="muted"></div>
+        <div class="row" id="trustBadges" style="margin-bottom:12px;"></div>
+        <div id="trustMsg" class="muted" style="font-size:0.9rem; line-height:1.5;"></div>
       </div>
 
-      <div class="card" id="pwCard" style="display:none;">
-        <div class="row">
-          <input id="password" type="password" placeholder="Share password" />
-          <button id="unlockBtn">Unlock</button>
-          <button id="retryBtn">Retry</button>
+      <div class="card" id="pwCard" style="display:none; max-width:400px; margin:0 auto 24px;">
+        <div style="margin-bottom:16px;">
+          <h2 style="margin:0 0 4px; font-size:1.2rem;">Protected Album</h2>
+          <div id="pwMsg" class="muted" style="font-size:0.9rem;"></div>
         </div>
-        <div id="pwMsg" class="muted"></div>
+        <div class="row" style="margin-bottom:0;">
+          <input id="password" type="password" placeholder="Enter password" style="flex:1;" />
+          <button id="unlockBtn" class="primary">Unlock</button>
+        </div>
+        <div class="row" style="margin-top:12px;">
+          <button id="retryBtn" style="width:100%; display:none;">Retry Connection</button>
+        </div>
       </div>
 
       <div id="content" class="grid"></div>
@@ -80,7 +197,7 @@
       function esc(s) { return String(s ?? '').replace(/[&<>\"]/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[m])); }
 
       function isoOrNone(value) {
-        if (!value) return 'none';
+        if (!value) return 'Never expires';
         const d = new Date(value);
         return Number.isNaN(d.getTime()) ? value : d.toLocaleString();
       }
@@ -89,17 +206,17 @@
         const unavailable = assets.filter((a) => !a.url).length;
         document.getElementById('trustCard').style.display = 'block';
         document.getElementById('trustBadges').innerHTML = `
-          <span class="pill">Derivative-only sharing</span>
-          <span class="pill">${share.requiresPassword ? 'Password protected' : 'No password'}</span>
+          <span class="pill">Web-safe derivatives</span>
+          <span class="pill">${share.requiresPassword ? 'Password protected 🔒' : 'Public link 🌐'}</span>
           <span class="pill">Expires: ${isoOrNone(share.expiresAt)}</span>
-          <span class="pill">Unavailable items: ${unavailable}</span>
+          ${unavailable > 0 ? `<span class="pill" style="border-color:var(--danger);color:var(--danger);">Unavailable items: ${unavailable}</span>` : ''}
         `;
-        document.getElementById('trustMsg').textContent = 'This page shows web-safe derivatives only. Original source files are never exposed here.';
+        document.getElementById('trustMsg').textContent = 'This page shows optimized derivatives. Original source files are never exposed.';
       }
 
       async function fetchShare() {
         if (!token) {
-          document.getElementById('subtitle').textContent = 'Missing token in URL.';
+          document.getElementById('subtitle').textContent = 'Missing share token.';
           return;
         }
 
@@ -110,22 +227,23 @@
         if (!res.ok) {
           if (res.status === 401) {
             document.getElementById('pwCard').style.display = 'block';
-            document.getElementById('pwMsg').textContent = 'Password required or invalid password. Please try again.';
-            document.getElementById('subtitle').textContent = 'This shared album is protected.';
+            document.getElementById('pwMsg').textContent = 'Please enter the password to view this album.';
+            document.getElementById('subtitle').textContent = 'Protected Share';
+            document.getElementById('content').innerHTML = '';
+            document.getElementById('trustCard').style.display = 'none';
             return;
           }
           if (res.status === 410) {
             document.getElementById('subtitle').textContent = 'This share link has expired.';
+            document.getElementById('content').innerHTML = '';
             return;
           }
           document.getElementById('subtitle').textContent = body.error || 'Unable to open share.';
+          document.getElementById('retryBtn').style.display = 'block';
           return;
         }
 
-        document.getElementById('pwCard').style.display = body.share.requiresPassword ? 'block' : 'none';
-        document.getElementById('pwMsg').textContent = body.share.requiresPassword
-          ? 'Protected share: enter password to view media.'
-          : '';
+        document.getElementById('pwCard').style.display = 'none';
         document.getElementById('title').textContent = body.album.name;
         document.getElementById('subtitle').textContent = `${body.assets.length} items`;
 
@@ -133,13 +251,13 @@
 
         document.getElementById('content').innerHTML = body.assets.map((asset) => {
           if (!asset.url) {
-            return `<div class="item"><div class="thumb"><span class="muted">Derivative unavailable</span></div><div class="body">${esc(asset.type)} · ${esc(asset.takenAt || asset.importedAt || '')}</div></div>`;
+            return `<div class="item"><div class="thumb"><span class="muted">Unavailable</span></div><div class="body">${esc(asset.type)} · ${esc(asset.takenAt || asset.importedAt || '')}</div></div>`;
           }
 
           const fileUrl = `${asset.url}${password ? `?password=${encodeURIComponent(password)}` : ''}`;
           const media = asset.type === 'video'
             ? `<video controls preload="metadata" src="${fileUrl}"></video>`
-            : `<img src="${fileUrl}" alt="shared media" />`;
+            : `<img src="${fileUrl}" alt="shared media" loading="lazy" />`;
 
           return `<div class="item"><div class="thumb">${media}</div><div class="body">${esc(asset.type)} · ${esc(asset.takenAt || asset.importedAt || '')}</div></div>`;
         }).join('');
@@ -149,6 +267,10 @@
         password = document.getElementById('password').value;
         await fetchShare();
       };
+
+      document.getElementById('password').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') document.getElementById('unlockBtn').click();
+      });
 
       document.getElementById('retryBtn').onclick = fetchShare;
 

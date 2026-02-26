@@ -48,3 +48,16 @@ export async function deleteAsset(db, assetId, { deleteSourceFiles = true } = {}
 
   return { assetId, success: true };
 }
+
+export async function bulkDeleteAssets(db, assetIds, options = {}) {
+  const results = [];
+  for (const id of assetIds) {
+    try {
+      const res = await deleteAsset(db, id, options);
+      results.push(res);
+    } catch (error) {
+      results.push({ assetId: id, success: false, error: error.message });
+    }
+  }
+  return results;
+}
