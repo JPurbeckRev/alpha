@@ -1188,25 +1188,41 @@
       $('createAlbumBtn').onclick = async () => { await api('/api/albums', { method: 'POST', body: JSON.stringify({ name: $('newAlbumName').value }) }); $('newAlbumName').value = ''; refreshAlbums(); };
       $('loadAlbumBtn').onclick = loadAlbum;
       $('renameAlbumBtn').onclick = async () => { await api(`/api/albums/${$('selectedAlbumPicker').value}`, { method: 'PATCH', body: JSON.stringify({ name: $('renameAlbumName').value }) }); loadAlbum(); refreshAlbums(); };
+      let albumDeleteConfirmUntil = 0;
       $('deleteAlbumBtn').onclick = async () => {
         const picker = $('selectedAlbumPicker');
+        const btn = $('deleteAlbumBtn');
         const albumId = picker.value?.trim();
         if (!albumId) {
-          alert('Select an album first.');
+          btn.textContent = 'Select album first';
+          setTimeout(() => { btn.textContent = 'Delete'; }, 1200);
           return;
         }
 
-        const albumName = picker.options[picker.selectedIndex]?.text || 'this album';
-        const confirmed = confirm(`Are you sure you want to delete album "${albumName}"?\n\nThis only removes the album container. Assets stay in your library.`);
-        if (!confirmed) return;
+        const now = Date.now();
+        if (now > albumDeleteConfirmUntil) {
+          const albumName = picker.options[picker.selectedIndex]?.text || 'selected album';
+          btn.textContent = `Confirm delete: ${albumName}`;
+          albumDeleteConfirmUntil = now + 6000;
+          setTimeout(() => {
+            if (Date.now() > albumDeleteConfirmUntil) btn.textContent = 'Delete';
+          }, 6200);
+          return;
+        }
 
         try {
+          btn.disabled = true;
           await api(`/api/albums/${albumId}`, { method: 'DELETE' });
           picker.value = '';
           $('albumAssets').innerHTML = '';
+          albumDeleteConfirmUntil = 0;
+          btn.textContent = 'Delete';
           await Promise.all([refreshAlbums(), refreshHomeExperience(), refreshShares(), refreshStats()]);
         } catch (err) {
-          alert(`Delete failed: ${err.message}`);
+          btn.textContent = 'Delete failed';
+          setTimeout(() => { btn.textContent = 'Delete'; }, 1400);
+        } finally {
+          btn.disabled = false;
         }
       };
       $('createShareBtn').onclick = createShare;
